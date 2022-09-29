@@ -1,0 +1,99 @@
+﻿@page "/lobby"
+@using ImpossibleSurvivalRace2.Hubs
+@using Microsoft.AspNetCore.SignalR
+@using Microsoft.AspNetCore.SignalR.Client;
+@inject NavigationManager NavigationManager
+
+<PageTitle>Lobby</PageTitle>
+
+<div class="form-group" hidden="@HasJoinedLobby">
+    <div class="form-group">
+        <label>
+            Lobby code:
+            <input @bind="codeInput" />
+        </label>
+        <button class="btn btn-primary" @onclick="JoinExistingLobby">Join existing lobby</button>
+    </div>
+    <button class="btn btn-success" @onclick="InitiateNewLobby">Create new lobby</button>
+</div>
+
+<div class="form-group" hidden="@(!HasJoinedLobby)">
+    <p>Current lobby: <b>@currentLobbyCode</b></p>
+
+<p>Lobby messages:</p>
+<ul id="messagesList">
+    @foreach (var message in messages)
+    {
+        <li>@message</li>
+    }
+</ul>
+</div>
+
+@code {
+    private HubConnection? hubConnection;
+    private bool HasJoinedLobby = false;
+    private string currentLobbyCode = "-";
+
+    private string? codeInput;
+    private List<string> messages = new List<string>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/gamehub"))
+            .Build();
+
+
+        hubConnection.On<string, string>("LobbyCreation", (message, lobbyCode) =>
+        {
+            var encodedMsg = $"{message}";
+            currentLobbyCode = lobbyCode;
+            messages.Add(encodedMsg);
+            InvokeAsync(StateHasChanged);
+        });
+
+        hubConnection.On<string>("LobbyJoined", (message) =>
+        {
+            var encodedMsg = $"{message}";
+            currentLobbyCode = codeInput;
+            messages.Add(encodedMsg);
+            InvokeAsync(StateHasChanged);
+        });
+
+        hubConnection.On<string>("LobbyLeft", (message) =>
+        {
+            var encodedMsg = $"{message}";
+            messages.Add(encodedMsg);
+            InvokeAsync(StateHasChanged);
+        });
+
+        await hubConnection.StartAsync();
+    }
+
+    private async Task InitiateNewLobby()
+    {
+        if(hubConnection is not null)
+        {
+            await hubConnection.SendAsync("CreateNewLobby");
+            HasJoinedLobby = true;
+        }
+    }
+
+    private async Task JoinExistingLobby()
+    {
+        if(hubConnection is not null)
+        {
+            await hubConnection.SendAsync("AddToLobby", codeInput);
+            HasJoinedLobby = true;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.SendAsync("RemoveFromLobby", currentLobbyCode);
+            await hubConnection.DisposeAsync();
+        }
+    }
+}
