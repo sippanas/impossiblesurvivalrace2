@@ -43,11 +43,10 @@
             .WithUrl(NavigationManager.ToAbsoluteUri("/gamehub"))
             .Build();
 
-
         hubConnection.On<string, string>("LobbyCreation", (message, lobbyCode) =>
         {
             var encodedMsg = $"{message}";
-            currentLobbyCode = lobbyCode;
+            currentLobbyCode = $"{lobbyCode}";
             messages.Add(encodedMsg);
             InvokeAsync(StateHasChanged);
         });
@@ -55,7 +54,6 @@
         hubConnection.On<string>("LobbyJoined", (message) =>
         {
             var encodedMsg = $"{message}";
-            currentLobbyCode = codeInput;
             messages.Add(encodedMsg);
             InvokeAsync(StateHasChanged);
         });
@@ -84,6 +82,7 @@
         if(hubConnection is not null)
         {
             await hubConnection.SendAsync("AddToLobby", codeInput);
+            currentLobbyCode = $"{codeInput}";
             HasJoinedLobby = true;
         }
     }
