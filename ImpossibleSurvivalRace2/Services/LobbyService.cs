@@ -1,4 +1,6 @@
-﻿using ImpossibleSurvivalRace2.Models;
+﻿using ImpossibleSurvivalRace2.Hubs;
+using ImpossibleSurvivalRace2.Models;
+using Microsoft.AspNetCore.SignalR;
 
 namespace ImpossibleSurvivalRace2.Services
 {
@@ -30,15 +32,28 @@ namespace ImpossibleSurvivalRace2.Services
             return Task.FromResult(false);
         }
 
-        public Task<bool> RemovePlayerFromLobby(int lobbyCode, string playerConnectionId)
+        public Task<bool> RemovePlayerFromLobby(string playerConnectionId)
         {
-            if (_lobbies.ContainsKey(lobbyCode))
+            foreach (var code in _lobbies.Keys)
             {
-                _lobbies[lobbyCode].Players.Remove(playerConnectionId);
+                _lobbies[code].Players.Remove(playerConnectionId);
                 return Task.FromResult(true);
             }
 
             return Task.FromResult(false);
+        }
+
+        public Task<int> IsPlayerInAnyLobby(string playerConnectionId)
+        {
+            foreach (var code in _lobbies.Keys)
+            {
+                if (_lobbies[code].Players.Contains(playerConnectionId))
+                {
+                    return Task.FromResult(code);
+                }
+            }
+
+            return Task.FromResult(0);
         }
 
         private int GenerateLobbyCode()

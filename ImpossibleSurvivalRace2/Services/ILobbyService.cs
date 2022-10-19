@@ -4,6 +4,7 @@
     {
         Task<bool> AddPlayerToLobby(int lobbyCode, string playerConnectionId);
         Task<int> CreateLobby(string creatorConnectionId);
-        Task<bool> RemovePlayerFromLobby(int lobbyCode, string playerConnectionId);
+        Task<int> IsPlayerInAnyLobby(string playerConnectionId);
+        Task<bool> RemovePlayerFromLobby(string playerConnectionId);
     }
 }

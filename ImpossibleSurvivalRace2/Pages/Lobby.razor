@@ -1,5 +1,7 @@
 ﻿@page "/lobby"
+
 @using ImpossibleSurvivalRace2.Hubs
+@using ImpossibleSurvivalRace2.Services
 @using Microsoft.AspNetCore.SignalR
 @using Microsoft.AspNetCore.SignalR.Client;
 @inject NavigationManager NavigationManager
@@ -20,17 +22,19 @@
 <div class="form-group" hidden="@(!HasJoinedLobby)">
     <p>Current lobby: <b>@currentLobbyCode</b></p>
 
-<p>Lobby messages:</p>
-<ul id="messagesList">
-    @foreach (var message in messages)
-    {
-        <li>@message</li>
-    }
-</ul>
+    <p>Lobby messages:</p>
+    <ul id="messagesList">
+        @foreach (var message in messages)
+        {
+            <li>@message</li>
+        }
+    </ul>
 </div>
 
 @code {
     private HubConnection? hubConnection;
+    private ILobbyService lobbyService;
+
     private bool HasJoinedLobby = false;
     private string currentLobbyCode = "-";
 
@@ -41,24 +45,19 @@
     {
         hubConnection = new HubConnectionBuilder()
             .WithUrl(NavigationManager.ToAbsoluteUri("/gamehub"))
+            .WithAutomaticReconnect()
             .Build();
 
-        hubConnection.On<string, string>("LobbyCreation", (message, lobbyCode) =>
-        {
-            var encodedMsg = $"{message}";
-            currentLobbyCode = $"{lobbyCode}";
-            messages.Add(encodedMsg);
-            InvokeAsync(StateHasChanged);
-        });
+        // TODO: Check if player was in a lobby previously
 
-        hubConnection.On<string>("LobbyJoined", (message) =>
+        hubConnection.On<string>("JoinLobby", (message) =>
         {
             var encodedMsg = $"{message}";
             messages.Add(encodedMsg);
             InvokeAsync(StateHasChanged);
         });
 
-        hubConnection.On<string>("LobbyLeft", (message) =>
+        hubConnection.On<string>("RemoveFromLobby", (message) =>
         {
             var encodedMsg = $"{message}";
             messages.Add(encodedMsg);
@@ -70,16 +69,25 @@
 
     private async Task InitiateNewLobby()
     {
-        if(hubConnection is not null)
+        if (hubConnection is not null)
         {
             await hubConnection.SendAsync("CreateNewLobby");
+
+            hubConnection.On<string, string>("CreateLobby", (message, lobbyCode) =>
+            {
+                var encodedMsg = $"{message}";
+                currentLobbyCode = $"{lobbyCode}";
+                messages.Add(encodedMsg);
+                InvokeAsync(StateHasChanged);
+            });
+
             HasJoinedLobby = true;
         }
     }
 
     private async Task JoinExistingLobby()
     {
-        if(hubConnection is not null)
+        if (hubConnection is not null)
         {
             await hubConnection.SendAsync("AddToLobby", codeInput);
             currentLobbyCode = $"{codeInput}";
