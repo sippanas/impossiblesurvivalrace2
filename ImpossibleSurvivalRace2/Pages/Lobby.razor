@@ -1,22 +1,22 @@
-﻿@page "/lobby"
+﻿@page "/"
 
 @using ImpossibleSurvivalRace2.Hubs
 @using ImpossibleSurvivalRace2.Services
 @using Microsoft.AspNetCore.SignalR
-@using Microsoft.AspNetCore.SignalR.Client;
+@using Microsoft.AspNetCore.SignalR.Client
 @inject NavigationManager NavigationManager
 
 <PageTitle>Lobby</PageTitle>
 
 <div class="form-group" hidden="@HasJoinedLobby">
     <div class="form-group">
-        <label>
+        <button id="buttonCenter" class="btn btn-primary" @onclick="JoinExistingLobby">Join existing lobby</button>
+        <label >
             Lobby code:
-            <input @bind="codeInput" />
+            <input  @bind="codeInput" />
         </label>
-        <button class="btn btn-primary" @onclick="JoinExistingLobby">Join existing lobby</button>
     </div>
-    <button class="btn btn-success" @onclick="InitiateNewLobby">Create new lobby</button>
+    <button id="buttonCenter" class="btn btn-success" @onclick="InitiateNewLobby">Create new lobby</button>
 </div>
 
 <div class="form-group" hidden="@(!HasJoinedLobby)">
