@@ -1,4 +1,4 @@
-﻿namespace ImpossibleSurvivalRace2.Hubs
+﻿namespace ImpossibleSurvivalRace2.Server.Hubs
 {
     public interface IGameHub
     {

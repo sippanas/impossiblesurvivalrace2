@@ -1,6 +1,5 @@
-﻿using ImpossibleSurvivalRace2.Hubs;
-using ImpossibleSurvivalRace2.Models;
-using Microsoft.AspNetCore.SignalR;
+﻿using ImpossibleSurvivalRace2.Server.Hubs;
+using ImpossibleSurvivalRace2.Shared.Models;
 
 namespace ImpossibleSurvivalRace2.Services
 {
