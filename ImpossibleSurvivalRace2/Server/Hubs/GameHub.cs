@@ -1,7 +1,7 @@
 ﻿using ImpossibleSurvivalRace2.Services;
 using Microsoft.AspNetCore.SignalR;
 
-namespace ImpossibleSurvivalRace2.Hubs
+namespace ImpossibleSurvivalRace2.Server.Hubs
 {
     public class GameHub : Hub<IGameHub>
     {
