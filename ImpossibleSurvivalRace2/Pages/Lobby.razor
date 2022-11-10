@@ -2,7 +2,7 @@
 
 @using Blazor.Extensions
 @using Blazor.Extensions.Canvas
-@using ImpossibleSurvivalRace2.Hubs
+@using ImpossibleSurvivalRace2.Server.Hubs
 @using ImpossibleSurvivalRace2.Services
 @using Microsoft.AspNetCore.SignalR
 @using Microsoft.AspNetCore.SignalR.Client
@@ -53,7 +53,7 @@
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         outer=10;
-        inner = 40;
+        inner = 30;
         this._context = await _canvasReference.CreateCanvas2DAsync();
 
         //isorinis loopas
@@ -86,25 +86,10 @@
         Line line9 = new Line(outer, Height - inner, inner, Height - inner, 3, "red");
         await DrawLine(_context, line9);
 
-        /*
-         * 
-      
         //player 1 dot
-        await _context.BeginPathAsync();
-        await _context.ArcAsync(outer, outer, 5, 12, Math.PI*2, true);
-        await _context.FillAsync();
-        await _context.StrokeAsync();
-        await _context.SetFillStyleAsync(color);
-        await _context.ClosePathAsync();
-        //player 2 dot
-        await _context.BeginPathAsync();
-        await _context.ArcAsync(Width, outer, 5, 12, Math.PI*2, true);
-        await _context.FillAsync();
-        await _context.StrokeAsync();
-        await _context.SetFillStyleAsync("green");
-        await _context.ClosePathAsync();
-         * 
-         */
+        Dot dot1 = new Dot(outer+inner, outer, 5, 12, Math.PI * 2, "red");
+        await DrawDot(_context, dot1);
+
 
     }
 
@@ -141,6 +126,14 @@
     // set line color
     await context.SetStrokeStyleAsync(line.color);
     await context.StrokeAsync();
+    }
+
+    public static async Task DrawDot(Canvas2DContext context, Dot dot)
+    {
+        await context.MoveToAsync(dot.startX, dot.startY);
+        await context.ArcAsync(dot.startX, dot.startY, dot.radius, dot.startAngle, dot.endAngle, true);
+        await context.FillAsync();
+        await context.SetFillStyleAsync(dot.color);
     }
 
 

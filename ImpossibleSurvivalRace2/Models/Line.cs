@@ -2,7 +2,7 @@
 {
     public class Line
     {
-        public Line(int strx,int stry, int enx,int eny,int thick,string col)
+        public Line(double strx, double stry, double enx, double eny, float thick,string col)
         {
             startX = strx;
             startY = stry;
@@ -12,11 +12,11 @@
             color = col;
 
         }
-        public int startX { get; set; }
-        public int startY { get; set; }
-        public int endX { get; set; }
-        public int endY { get; set; }
-        public int thickness { get; set; }
+        public double startX { get; set; }
+        public double startY { get; set; }
+        public double endX { get; set; }
+        public double endY { get; set; }
+        public float thickness { get; set; }
         public string color { get; set; }
     }
 }

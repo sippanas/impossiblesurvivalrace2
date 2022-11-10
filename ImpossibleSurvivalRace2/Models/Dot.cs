@@ -2,21 +2,21 @@
 {
     public class Dot
     {
-        public Dot(int strx, int stry, int enx, int eny, int thick, string col)
+        public Dot(double strx, double stry, double rad, double strAngle, double enAngle, string col)
         {
             startX = strx;
             startY = stry;
-            endX = enx;
-            endY = eny;
-            thickness = thick;
+            radius = rad;
+            startAngle = strAngle;
+            endAngle = enAngle;
             color = col;
 
         }
-        public int startX { get; set; }
-        public int startY { get; set; }
-        public int endX { get; set; }
-        public int endY { get; set; }
-        public int thickness { get; set; }
+        public double startX { get; set; }
+        public double startY { get; set; }
+        public double radius { get; set; }
+        public double startAngle { get; set; }
+        public double endAngle { get; set; }
         public string color { get; set; }
     }
 }
