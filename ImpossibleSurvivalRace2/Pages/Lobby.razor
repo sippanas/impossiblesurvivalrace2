@@ -16,17 +16,17 @@
 
 <div class="form-group" hidden="@HasJoinedLobby">
     <div class="form-group">
-        <button id="buttonCenter" class="btn btn-primary" @onclick="JoinExistingLobby">Join existing lobby</button>
+        <button id="buttonCenter1" class="btn btn-primary" @onclick="JoinExistingLobby">Join existing lobby</button>
         <label >
             Lobby code:
             <input  @bind="codeInput" />
         </label>
     </div>
-    <button id="buttonCenter" class="btn btn-success" @onclick="InitiateNewLobby">Create new lobby</button>
+    <button id="buttonCenter2" class="btn btn-success" @onclick="InitiateNewLobby">Create new lobby</button>
 
 </div>
 
-<div class="form-group" hidden="@(!HasJoinedLobby && !gameStarted)">
+<div class="form-group" hidden="@(!HasJoinedLobby || gameStarted)">
 
     <p>Current lobby: <b>@currentLobbyCode</b></p>
 
@@ -38,7 +38,7 @@
         }
     </ul>
 
-    <button id="buttonCenter" class="btn btn-success" @onclick="Startgame">Start game</button>
+    <button id="buttonCenter3" class="btn btn-success" @onclick="Startgame">Start game</button>
    
 </div>
 
@@ -54,7 +54,7 @@
     int Width=500;
     int Height=500;
     string color="red";
-    bool gameStarted = false;
+    private bool gameStarted = false;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
