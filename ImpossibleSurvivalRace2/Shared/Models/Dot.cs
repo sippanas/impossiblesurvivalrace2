@@ -2,6 +2,7 @@
 {
     public class Dot
     {
+        public Dot() { }
         public Dot(double strx, double stry, double rad, double strAngle, double enAngle, string col)
         {
             startX = strx;
