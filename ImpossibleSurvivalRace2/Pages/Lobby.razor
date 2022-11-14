@@ -26,11 +26,11 @@
         </label>
         <button id="buttonCenter" class="btn btn-primary" @onclick="JoinExistingLobby">Join existing lobby</button>
     </div>
-    <button id="buttonCenter" class="btn btn-success" @onclick="InitiateNewLobby">Create new lobby</button>
+    <button id="buttonCenter2" class="btn btn-success" @onclick="InitiateNewLobby">Create new lobby</button>
 
 </div>
 
-<div class="form-group" hidden="@(!HasJoinedLobby && !gameStarted)">
+<div class="form-group" hidden="@(!HasJoinedLobby || gameStarted)">
 
     <p>Current lobby: <b>@currentLobbyCode</b></p>
 
@@ -42,7 +42,7 @@
         }
     </ul>
 
-    <button id="buttonCenter" class="btn btn-success" @onclick="Startgame">Start game</button>
+    <button id="buttonCenter3" class="btn btn-success" @onclick="Startgame">Start game</button>
    
 </div>
 
