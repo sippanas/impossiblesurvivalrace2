@@ -1,4 +1,5 @@
 ﻿using ImpossibleSurvivalRace2.Services;
+using ImpossibleSurvivalRace2.Shared.Models;
 using Microsoft.AspNetCore.SignalR;
 
 namespace ImpossibleSurvivalRace2.Server.Hubs
@@ -12,9 +13,16 @@ namespace ImpossibleSurvivalRace2.Server.Hubs
             _lobbyService = lobbyService;
         }
 
+        public async Task<List<Player>> GetPlayers(int lobbyCode)
+        {
+            var players=await _lobbyService.GetPlayers(lobbyCode);
+            await Clients.Group(lobbyCode.ToString()).CreateLobby($"There are {_lobbyService.GetPlayers(lobbyCode)} players.",players.Count().ToString());
+            return await _lobbyService.GetPlayers(lobbyCode);
+        }
+
         public override async Task<Task> OnDisconnectedAsync(Exception? exception)
         {
-            await this.RemoveFromLobby(Context.ConnectionId);
+            //await this.RemoveFromLobby(Context.ConnectionId);
 
             return base.OnDisconnectedAsync(exception);
         }
@@ -24,36 +32,36 @@ namespace ImpossibleSurvivalRace2.Server.Hubs
             await Clients.All.ReceiveMessage(user, message);
         }
 
-        public async Task CreateNewLobby()
+        public async Task CreateNewLobby(Player player)
         {
-            var lobbyCode = await _lobbyService.CreateLobby(Context.ConnectionId);
-            await Groups.AddToGroupAsync(Context.ConnectionId, lobbyCode.ToString());
+            var lobbyCode = await _lobbyService.CreateLobby(player);
+            await Groups.AddToGroupAsync(player.ConnectionId, lobbyCode.ToString());
 
-            await Clients.Group(lobbyCode.ToString()).CreateLobby($"{Context.ConnectionId} has created the lobby {lobbyCode}.", 
+            await Clients.Group(lobbyCode.ToString()).CreateLobby($"{player.UserName} has created the lobby {lobbyCode}.", 
                 lobbyCode.ToString());
         }
 
-        public async Task AddToLobby(string lobbyCode)
+        public async Task AddToLobby(string lobbyCode, Player player)
         {
-            var result = await _lobbyService.AddPlayerToLobby(int.Parse(lobbyCode), Context.ConnectionId);
+            var result = await _lobbyService.AddPlayerToLobby(int.Parse(lobbyCode), player);
 
             if (result == true)
             {
-                await Groups.AddToGroupAsync(Context.ConnectionId, lobbyCode);
+                await Groups.AddToGroupAsync(player.ConnectionId, lobbyCode);
 
-                await Clients.Group(lobbyCode).JoinLobby($"{Context.ConnectionId} has joined the lobby.");
+                await Clients.Group(lobbyCode).JoinLobby($"{player.UserName} has joined the lobby.");
             }
         }
 
-        public async Task RemoveFromLobby(string lobbyCode)
-        {
-            var result = await _lobbyService.RemovePlayerFromLobby(Context.ConnectionId);
+        //public async Task RemoveFromLobby(string connectionId)
+        //{
+        //    var result = await _lobbyService.RemovePlayerFromLobby(connectionId);
 
-            if (result == true)
-            {
-                await Groups.RemoveFromGroupAsync(Context.ConnectionId, lobbyCode);
-                await Clients.Group(lobbyCode).RemoveFromLobby($"{Context.ConnectionId} has left the lobby");
-            }
-        }
+        //    if (result == true)
+        //    {
+        //        await Groups.RemoveFromGroupAsync(Context.ConnectionId, lobbyCode);
+        //        await Clients.Group(lobbyCode).RemoveFromLobby($"{player.UserName} has left the lobby");
+        //    }
+        //}
     }
 }
