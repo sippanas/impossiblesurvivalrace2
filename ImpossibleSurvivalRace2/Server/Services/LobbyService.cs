@@ -7,46 +7,46 @@ namespace ImpossibleSurvivalRace2.Services
     {
         private readonly Dictionary<int, Lobby> _lobbies = new Dictionary<int, Lobby>();
 
-        public Task<int> CreateLobby(string creatorConnectionId)
+        public Task<int> CreateLobby(Player creator)
         {
             var code = GenerateLobbyCode();
 
             _lobbies[code] = new Lobby
             {
-                CreatorConnectionId = creatorConnectionId,
-                Players = new List<string>()
+                Creator = creator,
+                Players = new List<Player>()
             };
 
             return Task.FromResult(code);
         }
 
-        public Task<bool> AddPlayerToLobby(int lobbyCode, string playerConnectionId)
+        public Task<bool> AddPlayerToLobby(int lobbyCode, Player player)
         {
             if (_lobbies.ContainsKey(lobbyCode))
             {
-                _lobbies[lobbyCode].Players.Add(playerConnectionId);
+                _lobbies[lobbyCode].Players.Add(player);
                 return Task.FromResult(true);
             }
 
             return Task.FromResult(false);
         }
 
-        public Task<bool> RemovePlayerFromLobby(string playerConnectionId)
+        public Task<bool> RemovePlayerFromLobby(Player player)
         {
             foreach (var code in _lobbies.Keys)
             {
-                _lobbies[code].Players.Remove(playerConnectionId);
+                _lobbies[code].Players.Remove(player);
                 return Task.FromResult(true);
             }
 
             return Task.FromResult(false);
         }
 
-        public Task<int> IsPlayerInAnyLobby(string playerConnectionId)
+        public Task<int> IsPlayerInAnyLobby(Player player)
         {
             foreach (var code in _lobbies.Keys)
             {
-                if (_lobbies[code].Players.Contains(playerConnectionId))
+                if (_lobbies[code].Players.Contains(player))
                 {
                     return Task.FromResult(code);
                 }

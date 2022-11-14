@@ -1,8 +1,8 @@
-﻿namespace ImpossibleSurvivalRace2.Models
+﻿namespace ImpossibleSurvivalRace2.Shared.Models
 {
     public class Line
     {
-        public Line(double strx, double stry, double enx, double eny, float thick,string col)
+        public Line(double strx, double stry, double enx, double eny, float thick, string col)
         {
             startX = strx;
             startY = stry;

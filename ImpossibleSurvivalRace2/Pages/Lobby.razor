@@ -7,7 +7,7 @@
 @using Microsoft.AspNetCore.SignalR
 @using Microsoft.AspNetCore.SignalR.Client
 @using Blazor.Extensions.Canvas.Canvas2D
-@using ImpossibleSurvivalRace2.Models
+@using ImpossibleSurvivalRace2.Shared.Models
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JsRuntime
 
@@ -16,11 +16,15 @@
 
 <div class="form-group" hidden="@HasJoinedLobby">
     <div class="form-group">
-        <button id="buttonCenter" class="btn btn-primary" @onclick="JoinExistingLobby">Join existing lobby</button>
-        <label >
-            Lobby code:
-            <input  @bind="codeInput" />
+        <label>
+            Username: 
+            <input @bind="UserNameInput"/>
         </label>
+        <label> 
+            Lobby code:
+            <input @bind="codeInput" />
+        </label>
+        <button id="buttonCenter" class="btn btn-primary" @onclick="JoinExistingLobby">Join existing lobby</button>
     </div>
     <button id="buttonCenter" class="btn btn-success" @onclick="InitiateNewLobby">Create new lobby</button>
 
@@ -147,13 +151,14 @@
         gameStarted = true;
     }
 
-
+    private Player player = null;
     private HubConnection? hubConnection;
     private ILobbyService lobbyService;
 
     private bool HasJoinedLobby = false;
     private string currentLobbyCode = "-";
 
+    private string? UserNameInput;
     private string? codeInput;
     private List<string> messages = new List<string>();
 
@@ -187,7 +192,9 @@
     {
         if (hubConnection is not null)
         {
-            await hubConnection.SendAsync("CreateNewLobby");
+            CreatePlayer(UserNameInput); // Create a player if it doesn't exist
+
+            await hubConnection.SendAsync("CreateNewLobby", player);
 
             hubConnection.On<string, string>("CreateLobby", (message, lobbyCode) =>
             {
@@ -205,9 +212,23 @@
     {
         if (hubConnection is not null)
         {
-            await hubConnection.SendAsync("AddToLobby", codeInput);
+            CreatePlayer(UserNameInput); // Create a player if doesn't exist
+
+            await hubConnection.SendAsync("AddToLobby", codeInput, player);
             currentLobbyCode = $"{codeInput}";
             HasJoinedLobby = true;
+        }
+    }
+
+    private void CreatePlayer(string userNameInput)
+    {
+        if (this.player == null)
+        {
+            player = new Player
+            {
+                ConnectionId = hubConnection.ConnectionId,
+                UserName = userNameInput
+            };
         }
     }
 
