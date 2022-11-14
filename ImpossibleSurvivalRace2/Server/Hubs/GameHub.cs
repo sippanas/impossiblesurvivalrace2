@@ -1,5 +1,6 @@
 ﻿using ImpossibleSurvivalRace2.Services;
 using Microsoft.AspNetCore.SignalR;
+using ImpossibleSurvivalRace2.Shared.Models;
 
 namespace ImpossibleSurvivalRace2.Server.Hubs
 {
@@ -10,6 +11,13 @@ namespace ImpossibleSurvivalRace2.Server.Hubs
         public GameHub(ILobbyService lobbyService)
         {
             _lobbyService = lobbyService;
+        }
+
+        public async Task<List<string>> GetPlayers(int lobbyCode)
+        {
+            var players=await _lobbyService.GetPlayers(lobbyCode);
+            await Clients.Group(lobbyCode.ToString()).CreateLobby($"There are {_lobbyService.GetPlayers(lobbyCode)} players.",players.Count().ToString());
+            return await _lobbyService.GetPlayers(lobbyCode);
         }
 
         public override async Task<Task> OnDisconnectedAsync(Exception? exception)

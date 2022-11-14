@@ -51,10 +51,12 @@
     BECanvasComponent _canvasReference;
     int outer;
     int inner;
-    int Width=500;
+    int Width=1400;
     int Height=500;
     string color="red";
     bool gameStarted = false;
+    int startLineCenterX;
+    int startLineCenterY;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -88,14 +90,12 @@
         Line line8 = new Line(Width-inner, inner,inner, inner, 3, "brown");
         await DrawLine(_context, line8);
 
+        startLineCenterY = Height - inner;
+        startLineCenterX=(inner-outer)/ 2;
+
         //start line
         Line line9 = new Line(outer, Height - inner, inner, Height - inner, 3, "red");
         await DrawLine(_context, line9);
-
-        //player 1 dot
-        Dot dot1 = new Dot(outer+inner, outer, 5, 12, Math.PI * 2, "red");
-        await DrawDot(_context, dot1);
-
 
     }
 
@@ -198,6 +198,7 @@
             });
 
             HasJoinedLobby = true;
+            await SpawnPlayer(currentLobbyCode);
         }
     }
 
@@ -208,9 +209,49 @@
             await hubConnection.SendAsync("AddToLobby", codeInput);
             currentLobbyCode = $"{codeInput}";
             HasJoinedLobby = true;
+            await SpawnPlayer(currentLobbyCode);
         }
     }
+    private async Task SpawnPlayer(string lobbyCode)
+    {
+        int x;
+        int y;
 
+        List<string> currPlayers=new List<string>();
+        await hubConnection.SendAsync("GetLobby", lobbyCode);
+        hubConnection.On<string, List<string>>("GetLobby", (message, players) =>
+        {
+            var encodedMsg = $"{message}";
+            currPlayers = players;
+            messages.Add(encodedMsg);
+          //  InvokeAsync(StateHasChanged);
+        });
+        if (currPlayers.Count() == 0)
+        {
+            x = startLineCenterX + 10;
+            y = startLineCenterY + 5;
+            Dot dot = new Dot(x, y, 5, 12, Math.PI * 2, "red");
+            await DrawDot(_context, dot);
+        } else if(currPlayers.Count() == 1)
+        {
+            x = startLineCenterX + 25;
+            y = startLineCenterY + 5;
+            Dot dot = new Dot(x, y, 5, 12, Math.PI * 2, "green");
+            await DrawDot(_context, dot);
+        } else if(currPlayers.Count() == 2)
+        {
+            x = startLineCenterX + 40;
+            y = startLineCenterY + 5;
+            Dot dot = new Dot(x, y, 5, 12, Math.PI * 2, "blue");
+            await DrawDot(_context, dot);
+        }else if(currPlayers.Count() == 3)
+        {
+            x = startLineCenterX + 55;
+            y = startLineCenterY + 5;
+            Dot dot = new Dot(x, y, 5, 12, Math.PI * 2, "purple");
+            await DrawDot(_context, dot);
+        }
+    }
     public async ValueTask DisposeAsync()
     {
         if (hubConnection is not null)
