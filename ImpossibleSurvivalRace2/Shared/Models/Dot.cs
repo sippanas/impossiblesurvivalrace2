@@ -1,4 +1,4 @@
-﻿namespace ImpossibleSurvivalRace2.Models
+﻿namespace ImpossibleSurvivalRace2.Shared.Models
 {
     public class Dot
     {
