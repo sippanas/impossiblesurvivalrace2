@@ -9,5 +9,6 @@ namespace ImpossibleSurvivalRace2.Services
         Task<int> CreateLobby(Player creator);
         Task<int> IsPlayerInAnyLobby(Player player);
         Task<bool> RemovePlayerFromLobby(Player player);
+        Task<List<Player>> GetPlayers(int lobbyCode);
     }
 }

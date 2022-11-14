@@ -1,7 +1,6 @@
 ﻿using ImpossibleSurvivalRace2.Services;
 using ImpossibleSurvivalRace2.Shared.Models;
 using Microsoft.AspNetCore.SignalR;
-using ImpossibleSurvivalRace2.Shared.Models;
 
 namespace ImpossibleSurvivalRace2.Server.Hubs
 {
@@ -14,7 +13,7 @@ namespace ImpossibleSurvivalRace2.Server.Hubs
             _lobbyService = lobbyService;
         }
 
-        public async Task<List<string>> GetPlayers(int lobbyCode)
+        public async Task<List<Player>> GetPlayers(int lobbyCode)
         {
             var players=await _lobbyService.GetPlayers(lobbyCode);
             await Clients.Group(lobbyCode.ToString()).CreateLobby($"There are {_lobbyService.GetPlayers(lobbyCode)} players.",players.Count().ToString());
