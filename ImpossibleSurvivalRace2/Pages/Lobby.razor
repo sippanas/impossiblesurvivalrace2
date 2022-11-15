@@ -1,5 +1,4 @@
 ﻿@page "/"
-
 @using Blazor.Extensions
 @using Blazor.Extensions.Canvas
 @using ImpossibleSurvivalRace2.Server.Hubs
@@ -11,6 +10,11 @@
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JsRuntime
 
+<style>
+    body {
+        background-color: #EFDECD ;
+    }
+</style>
 
 <PageTitle>Lobby</PageTitle>
 
@@ -18,11 +22,11 @@
     <div class="form-group">
         <label>
             Username: 
-            <input @bind="UserNameInput"/>
+            <input @bind="UserNameInput" placeholder="@inputUserWarningText" />
         </label>
         <label> 
             Lobby code:
-            <input @bind="codeInput" />
+            <input @bind="codeInput" placeholder="@inputCodeWarningText" />
         </label>
         <button id="buttonCenter" class="btn btn-primary" @onclick="JoinExistingLobby">Join existing lobby</button>
     </div>
@@ -42,8 +46,7 @@
         }
     </ul>
 
-    <button id="buttonCenter3" class="btn btn-success" @onclick="Startgame">Start game</button>
-    <button id="testBtn" class="btn btn-danger" @onclick="TestPlayerCount">Test player count</button>
+    <button id="buttonCenter3" class="btn btn-success" hidden="@(!IsCreator)" @onclick="Startgame">Start game</button>
    
 </div>
 
@@ -52,57 +55,78 @@
 </div>
 
 @code {
+    //map variables
     Canvas2DContext _context;
     BECanvasComponent _canvasReference;
     int outer;
     int inner;
     int Width=1400;
     int Height=500;
-    string color="red";
-    bool gameStarted = false;
+    string mapColor="#9F8170";
+
     int startLineCenterX;
     int startLineCenterY;
 
+    //other variables
+    private Player player = null;
+    private HubConnection? hubConnection;
+    private ILobbyService lobbyService;
+
+    bool gameStarted = false;
+    private bool HasJoinedLobby = false;
+    private bool HasBeenSpawned = false;
+    private bool IsCreator = false;
+    private string currentLobbyCode = "-";
+
+    private string? UserNameInput;
+    private string? codeInput;
+
+    private string? inputUserWarningText;
+    private string? inputCodeWarningText;
+
+    private List<string> messages = new List<string>();
+    private Player winner = new Player();
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        outer=10;
+        outer=0;
         inner = 30;
         this._context = await _canvasReference.CreateCanvas2DAsync();
 
         //isorinis loopas
-        Line line1 = new Line(outer, outer, outer, Height, 3, "brown");
+        Line line1 = new Line(outer, outer, outer, Height, 3, mapColor);
         await DrawLine(_context, line1);
 
-        Line line2 = new Line(outer, Height, Width, Height, 3, "brown");
+        Line line2 = new Line(outer, Height, Width, Height, 3, mapColor);
         await DrawLine(_context, line2);
 
-        Line line3 = new Line(Width, Height, Width, outer, 3, "brown");
+        Line line3 = new Line(Width, Height, Width, outer, 3, mapColor);
         await DrawLine(_context, line3);
 
-        Line line4 = new Line(Width, outer, outer, outer, 3, "brown");
+        Line line4 = new Line(Width, outer, outer, outer, 3, mapColor);
         await DrawLine(_context, line4);
 
         //vidinis loopas
-        Line line5 = new Line(inner, inner, inner, Height-inner, 3, "brown");
+        Line line5 = new Line(inner, inner, inner, Height-inner, 3, mapColor);
         await DrawLine(_context, line5);
 
-        Line line6 = new Line(inner, Height-inner, Width-inner, Height-inner, 3, "brown");
+        Line line6 = new Line(inner, Height-inner, Width-inner, Height-inner, 3, mapColor);
         await DrawLine(_context, line6);
 
-        Line line7 = new Line(Width-inner, Height-inner, Width-inner, inner, 3, "brown");
+        Line line7 = new Line(Width-inner, Height-inner, Width-inner, inner, 3, mapColor);
         await DrawLine(_context, line7);
 
-        Line line8 = new Line(Width-inner, inner,inner, inner, 3, "brown");
+        Line line8 = new Line(Width-inner, inner,inner, inner, 3, mapColor);
         await DrawLine(_context, line8);
 
         startLineCenterY = Height - inner;
         startLineCenterX=(inner-outer)/ 2;
 
         //start line
-        Line line9 = new Line(outer, Height - inner, inner, Height - inner, 3, "red");
+        Line line9 = new Line(outer, Height - inner, inner, Height - inner, 3, "#A52A2A");
         await DrawLine(_context, line9);
 
-        //await SpawnPlayer(int.Parse(currentLobbyCode));
+        await SpawnPlayer(int.Parse(currentLobbyCode));
     }
 
     private bool CheckBoundaries(int xPlayer,int yPlayer,int outer,int inner)
@@ -153,18 +177,6 @@
         gameStarted = true;
     }
 
-    private Player player = null;
-    private HubConnection? hubConnection;
-    private ILobbyService lobbyService;
-
-    private bool HasJoinedLobby = false;
-    private bool HasBeenSpawned = false;
-    private string currentLobbyCode = "-";
-
-    private string? UserNameInput;
-    private string? codeInput;
-    private List<string> messages = new List<string>();
-
     protected override async Task OnInitializedAsync()
     {
         hubConnection = new HubConnectionBuilder()
@@ -195,19 +207,26 @@
     {
         if (hubConnection is not null)
         {
-            CreatePlayer(UserNameInput); // Create a player if it doesn't exist
-
-            await hubConnection.SendAsync("CreateNewLobby", player);
-
-            hubConnection.On<string, string>("CreateLobby", (message, lobbyCode) =>
+            if (!string.IsNullOrWhiteSpace(UserNameInput))
             {
-                var encodedMsg = $"{message}";
-                currentLobbyCode = $"{lobbyCode}";
-                messages.Add(encodedMsg);
-                InvokeAsync(StateHasChanged);
-            });
+                inputUserWarningText = "";
 
-            HasJoinedLobby = true;
+                CreatePlayer(UserNameInput); // Create a player if it doesn't exist
+
+                await hubConnection.SendAsync("CreateNewLobby", player);
+
+                hubConnection.On<string, string>("CreateLobby", (message, lobbyCode) =>
+                {
+                    var encodedMsg = $"{message}";
+                    currentLobbyCode = $"{lobbyCode}";
+                    messages.Add(encodedMsg);
+                    InvokeAsync(StateHasChanged);
+                });
+                IsCreator = true;
+                HasJoinedLobby = true;
+            }
+            else
+                inputUserWarningText = "Username is not valid";
         }
     }
 
@@ -215,11 +234,23 @@
     {
         if (hubConnection is not null)
         {
-            CreatePlayer(UserNameInput); // Create a player if doesn't exist
+            if (!string.IsNullOrWhiteSpace(UserNameInput))
+            {
+                inputUserWarningText = "";
+                if (!string.IsNullOrWhiteSpace(codeInput))
+                {
+                    inputCodeWarningText = "";
+                    CreatePlayer(UserNameInput); // Create a player if doesn't exist
 
-            await hubConnection.SendAsync("AddToLobby", codeInput, player);
-            currentLobbyCode = $"{codeInput}";
-            HasJoinedLobby = true;
+                    await hubConnection.SendAsync("AddToLobby", codeInput, player);
+                    currentLobbyCode = $"{codeInput}";
+                    HasJoinedLobby = true;
+                }
+                else
+                    inputCodeWarningText = "Lobby code is not valid";
+            }
+            else
+                inputUserWarningText = "Username is not valid";
         }
     }
     public Random random { get { return new Random(); } }
@@ -234,7 +265,7 @@
             string[] colorList = new string[] { "red", "purple", "green", "blue", "brown", "orange", "pink" };
             string randomColor = colorList[random.Next(0, colorList.Length - 1)];
 
-            //   currPlayers = await lobbyService.GetPlayers(lobbyCode); neveikia
+         //   currPlayers = await lobbyService.GetPlayers(lobbyCode); neveikia
 
             switch (currPlayers.Count())
             {
@@ -277,19 +308,6 @@
                 UserName = userNameInput
             };
         }
-    }
-
-    private async Task<int> RetrievePlayerCount(string lobbyCode)
-    {
-        var count = 0;
-        await hubConnection.SendAsync("GetPlayersInLobby", lobbyCode);
-
-        hubConnection.On<int>("GetPlayerCount", (playerCount) =>
-        {
-            count = playerCount;
-        });
-
-        return count;
     }
 
     public async ValueTask DisposeAsync()
