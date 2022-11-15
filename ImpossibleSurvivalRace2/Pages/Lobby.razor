@@ -18,11 +18,11 @@
     <div class="form-group">
         <label>
             Username: 
-            <input @bind="UserNameInput"/>
+            <input @bind="UserNameInput" placeholder="@inputUserWarningText" />
         </label>
         <label> 
             Lobby code:
-            <input @bind="codeInput" />
+            <input @bind="codeInput" placeholder="@inputCodeWarningText" />
         </label>
         <button id="buttonCenter" class="btn btn-primary" @onclick="JoinExistingLobby">Join existing lobby</button>
     </div>
@@ -162,6 +162,10 @@
 
     private string? UserNameInput;
     private string? codeInput;
+
+    private string? inputUserWarningText;
+    private string? inputCodeWarningText;
+
     private List<string> messages = new List<string>();
 
     protected override async Task OnInitializedAsync()
@@ -194,19 +198,26 @@
     {
         if (hubConnection is not null)
         {
-            CreatePlayer(UserNameInput); // Create a player if it doesn't exist
-
-            await hubConnection.SendAsync("CreateNewLobby", player);
-
-            hubConnection.On<string, int>("CreateLobby", (message, lobbyCode) =>
+            if (!string.IsNullOrWhiteSpace(UserNameInput))
             {
-                var encodedMsg = $"{message}";
-                currentLobbyCode = $"{lobbyCode}";
-                messages.Add(encodedMsg);
-                InvokeAsync(StateHasChanged);
-            });
+                inputUserWarningText = "";
 
-            HasJoinedLobby = true;
+                CreatePlayer(UserNameInput); // Create a player if it doesn't exist
+
+                await hubConnection.SendAsync("CreateNewLobby", player);
+
+                hubConnection.On<string, int>("CreateLobby", (message, lobbyCode) =>
+                {
+                    var encodedMsg = $"{message}";
+                    currentLobbyCode = $"{lobbyCode}";
+                    messages.Add(encodedMsg);
+                    InvokeAsync(StateHasChanged);
+                });
+
+                HasJoinedLobby = true;
+            }
+            else
+                inputUserWarningText = "Username is not valid";
         }
     }
 
@@ -214,11 +225,23 @@
     {
         if (hubConnection is not null)
         {
-            CreatePlayer(UserNameInput); // Create a player if doesn't exist
+            if (!string.IsNullOrWhiteSpace(UserNameInput))
+            {
+                inputUserWarningText = "";
+                if (!string.IsNullOrWhiteSpace(codeInput))
+                {
+                    inputCodeWarningText = "";
+                    CreatePlayer(UserNameInput); // Create a player if doesn't exist
 
-            await hubConnection.SendAsync("AddToLobby", codeInput, player);
-            currentLobbyCode = $"{codeInput}";
-            HasJoinedLobby = true;
+                    await hubConnection.SendAsync("AddToLobby", codeInput, player);
+                    currentLobbyCode = $"{codeInput}";
+                    HasJoinedLobby = true;
+                }
+                else
+                    inputCodeWarningText = "Lobby code is not valid";
+            }
+            else
+                inputUserWarningText = "Username is not valid";
         }
     }
     public Random random { get { return new Random(); } }
