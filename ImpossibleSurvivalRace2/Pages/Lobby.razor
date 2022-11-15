@@ -46,7 +46,7 @@
         }
     </ul>
 
-    <button id="buttonCenter3" class="btn btn-success" @onclick="Startgame">Start game</button>
+    <button id="buttonCenter3" class="btn btn-success" hidden="@(!IsCreator)" @onclick="Startgame">Start game</button>
    
 </div>
 
@@ -75,6 +75,7 @@
     bool gameStarted = false;
     private bool HasJoinedLobby = false;
     private bool HasBeenSpawned = false;
+    private bool IsCreator = false;
     private string currentLobbyCode = "0";
 
     private string? UserNameInput;
@@ -221,7 +222,7 @@
                     messages.Add(encodedMsg);
                     InvokeAsync(StateHasChanged);
                 });
-
+                IsCreator = true;
                 HasJoinedLobby = true;
             }
             else
