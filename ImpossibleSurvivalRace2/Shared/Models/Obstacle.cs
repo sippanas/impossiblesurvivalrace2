@@ -1,6 +1,6 @@
 ﻿namespace ImpossibleSurvivalRace2.Shared.Models
 {
-    public class Obstacle
+    public abstract class Obstacle
     {
         public int RemovesFuelQuantity { get; set; }
     }

@@ -1,5 +1,4 @@
 ﻿@page "/"
-
 @using Blazor.Extensions
 @using Blazor.Extensions.Canvas
 @using ImpossibleSurvivalRace2.Server.Hubs
@@ -11,6 +10,11 @@
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JsRuntime
 
+<style>
+    body {
+        background-color: #EFDECD ;
+    }
+</style>
 
 <PageTitle>Lobby</PageTitle>
 
@@ -51,54 +55,70 @@
 </div>
 
 @code {
+    //map variables
     Canvas2DContext _context;
     BECanvasComponent _canvasReference;
     int outer;
     int inner;
     int Width=1400;
     int Height=500;
-    string color="red";
-    bool gameStarted = false;
+    string mapColor="#9F8170";
+
     int startLineCenterX;
     int startLineCenterY;
 
+    //other variables
+    private Player player = null;
+    private HubConnection? hubConnection;
+    private ILobbyService lobbyService;
+
+    bool gameStarted = false;
+    private bool HasJoinedLobby = false;
+    private bool HasBeenSpawned = false;
+    private string currentLobbyCode = "0";
+
+    private string? UserNameInput;
+    private string? codeInput;
+    private List<string> messages = new List<string>();
+    private Player winner = new Player();
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        outer=10;
+        outer=0;
         inner = 30;
         this._context = await _canvasReference.CreateCanvas2DAsync();
 
         //isorinis loopas
-        Line line1 = new Line(outer, outer, outer, Height, 3, "brown");
+        Line line1 = new Line(outer, outer, outer, Height, 3, mapColor);
         await DrawLine(_context, line1);
 
-        Line line2 = new Line(outer, Height, Width, Height, 3, "brown");
+        Line line2 = new Line(outer, Height, Width, Height, 3, mapColor);
         await DrawLine(_context, line2);
 
-        Line line3 = new Line(Width, Height, Width, outer, 3, "brown");
+        Line line3 = new Line(Width, Height, Width, outer, 3, mapColor);
         await DrawLine(_context, line3);
 
-        Line line4 = new Line(Width, outer, outer, outer, 3, "brown");
+        Line line4 = new Line(Width, outer, outer, outer, 3, mapColor);
         await DrawLine(_context, line4);
 
         //vidinis loopas
-        Line line5 = new Line(inner, inner, inner, Height-inner, 3, "brown");
+        Line line5 = new Line(inner, inner, inner, Height-inner, 3, mapColor);
         await DrawLine(_context, line5);
 
-        Line line6 = new Line(inner, Height-inner, Width-inner, Height-inner, 3, "brown");
+        Line line6 = new Line(inner, Height-inner, Width-inner, Height-inner, 3, mapColor);
         await DrawLine(_context, line6);
 
-        Line line7 = new Line(Width-inner, Height-inner, Width-inner, inner, 3, "brown");
+        Line line7 = new Line(Width-inner, Height-inner, Width-inner, inner, 3, mapColor);
         await DrawLine(_context, line7);
 
-        Line line8 = new Line(Width-inner, inner,inner, inner, 3, "brown");
+        Line line8 = new Line(Width-inner, inner,inner, inner, 3, mapColor);
         await DrawLine(_context, line8);
 
         startLineCenterY = Height - inner;
         startLineCenterX=(inner-outer)/ 2;
 
         //start line
-        Line line9 = new Line(outer, Height - inner, inner, Height - inner, 3, "red");
+        Line line9 = new Line(outer, Height - inner, inner, Height - inner, 3, "#A52A2A");
         await DrawLine(_context, line9);
 
         await SpawnPlayer(int.Parse(currentLobbyCode));
@@ -151,18 +171,6 @@
     {
         gameStarted = true;
     }
-
-    private Player player = null;
-    private HubConnection? hubConnection;
-    private ILobbyService lobbyService;
-
-    private bool HasJoinedLobby = false;
-    private bool HasBeenSpawned = false;
-    private string currentLobbyCode = "0";
-
-    private string? UserNameInput;
-    private string? codeInput;
-    private List<string> messages = new List<string>();
 
     protected override async Task OnInitializedAsync()
     {
