@@ -13,12 +13,12 @@ namespace ImpossibleSurvivalRace2.Server.Hubs
             _lobbyService = lobbyService;
         }
 
-        public async Task<List<Player>> GetPlayers(int lobbyCode)
-        {
-            var players=await _lobbyService.GetPlayers(lobbyCode);
-            await Clients.Group(lobbyCode.ToString()).CreateLobby($"There are {_lobbyService.GetPlayers(lobbyCode)} players.",players.Count().ToString());
-            return await _lobbyService.GetPlayers(lobbyCode);
-        }
+        //public async Task<List<Player>> GetPlayers(int lobbyCode)
+        //{
+        //    var players=await _lobbyService.GetPlayers(lobbyCode);
+        //    await Clients.Group(lobbyCode.ToString()).CreateLobby($"There are {_lobbyService.GetPlayers(lobbyCode)} players.",players.Count().ToString());
+        //    return await _lobbyService.GetPlayers(lobbyCode);
+        //}
 
         public override async Task<Task> OnDisconnectedAsync(Exception? exception)
         {
@@ -51,6 +51,13 @@ namespace ImpossibleSurvivalRace2.Server.Hubs
 
                 await Clients.Group(lobbyCode).JoinLobby($"{player.UserName} has joined the lobby.");
             }
+        }
+
+        public async Task GetPlayersInLobby(string lobbyCode)
+        {
+            var result = await _lobbyService.GetPlayersInLobbyCount(int.Parse(lobbyCode));
+
+            await Clients.Group(lobbyCode).GetPlayerCount(result);
         }
 
         //public async Task RemoveFromLobby(string connectionId)

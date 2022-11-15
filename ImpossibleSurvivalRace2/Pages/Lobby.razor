@@ -43,6 +43,7 @@
     </ul>
 
     <button id="buttonCenter3" class="btn btn-success" @onclick="Startgame">Start game</button>
+    <button id="testBtn" class="btn btn-danger" @onclick="TestPlayerCount">Test player count</button>
    
 </div>
 
@@ -101,7 +102,7 @@
         Line line9 = new Line(outer, Height - inner, inner, Height - inner, 3, "red");
         await DrawLine(_context, line9);
 
-        await SpawnPlayer(int.Parse(currentLobbyCode));
+        //await SpawnPlayer(int.Parse(currentLobbyCode));
     }
 
     private bool CheckBoundaries(int xPlayer,int yPlayer,int outer,int inner)
@@ -158,7 +159,7 @@
 
     private bool HasJoinedLobby = false;
     private bool HasBeenSpawned = false;
-    private string currentLobbyCode = "0";
+    private string currentLobbyCode = "-";
 
     private string? UserNameInput;
     private string? codeInput;
@@ -198,7 +199,7 @@
 
             await hubConnection.SendAsync("CreateNewLobby", player);
 
-            hubConnection.On<string, int>("CreateLobby", (message, lobbyCode) =>
+            hubConnection.On<string, string>("CreateLobby", (message, lobbyCode) =>
             {
                 var encodedMsg = $"{message}";
                 currentLobbyCode = $"{lobbyCode}";
@@ -233,7 +234,7 @@
             string[] colorList = new string[] { "red", "purple", "green", "blue", "brown", "orange", "pink" };
             string randomColor = colorList[random.Next(0, colorList.Length - 1)];
 
-         //   currPlayers = await lobbyService.GetPlayers(lobbyCode); neveikia
+            //   currPlayers = await lobbyService.GetPlayers(lobbyCode); neveikia
 
             switch (currPlayers.Count())
             {
@@ -276,6 +277,19 @@
                 UserName = userNameInput
             };
         }
+    }
+
+    private async Task<int> RetrievePlayerCount(string lobbyCode)
+    {
+        var count = 0;
+        await hubConnection.SendAsync("GetPlayersInLobby", lobbyCode);
+
+        hubConnection.On<int>("GetPlayerCount", (playerCount) =>
+        {
+            count = playerCount;
+        });
+
+        return count;
     }
 
     public async ValueTask DisposeAsync()

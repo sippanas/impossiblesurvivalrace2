@@ -1,5 +1,4 @@
 ﻿using ImpossibleSurvivalRace2.Shared.Models;
-using ImpossibleSurvivalRace2.Shared.Models;
 
 namespace ImpossibleSurvivalRace2.Services
 {
@@ -9,6 +8,6 @@ namespace ImpossibleSurvivalRace2.Services
         Task<int> CreateLobby(Player creator);
         Task<int> IsPlayerInAnyLobby(Player player);
         Task<bool> RemovePlayerFromLobby(Player player);
-        Task<List<Player>> GetPlayers(int lobbyCode);
+        Task<int> GetPlayersInLobbyCount(int lobbyCode);
     }
 }
