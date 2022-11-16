@@ -7,10 +7,11 @@ namespace ImpossibleSurvivalRace2.Services
     {
         private readonly Dictionary<int, Lobby> _lobbies = new Dictionary<int, Lobby>();
 
-        public Task<List<Player>> GetPlayers(int lobbyCode)
+        public Task<int> GetPlayersInLobbyCount(int lobbyCode)
         {
-            return Task.FromResult(_lobbies[lobbyCode].Players);
+            return Task.FromResult(_lobbies[lobbyCode].Players.Count);
         }
+
         public Task<int> CreateLobby(Player creator)
         {
             var code = GenerateLobbyCode();
@@ -20,6 +21,8 @@ namespace ImpossibleSurvivalRace2.Services
                 Creator = creator,
                 Players = new List<Player>()
             };
+
+            _lobbies[code].Players.Add(creator);
 
             return Task.FromResult(code);
         }

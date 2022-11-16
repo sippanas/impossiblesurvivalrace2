@@ -75,7 +75,7 @@
     private bool HasJoinedLobby = false;
     private bool HasBeenSpawned = false;
     private bool IsCreator = false;
-    private string currentLobbyCode = "0";
+    private string currentLobbyCode = "-";
 
     private string? UserNameInput;
     private string? codeInput;
@@ -256,7 +256,7 @@
 
                 await hubConnection.SendAsync("CreateNewLobby", player);
 
-                hubConnection.On<string, int>("CreateLobby", (message, lobbyCode) =>
+                hubConnection.On<string, string>("CreateLobby", (message, lobbyCode) =>
                 {
                     var encodedMsg = $"{message}";
                     currentLobbyCode = $"{lobbyCode}";
