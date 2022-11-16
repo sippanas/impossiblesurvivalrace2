@@ -95,20 +95,28 @@
         switch(e.Code)
         {
             case "ArrowDown":
-                //   if(CheckBoundaries(leftDir,topDir,outer,inner))
-                topDir++;
-                break;
-            case "ArrowLeft":
-                //  if(CheckBoundaries(leftDir,topDir,outer,inner))
-                leftDir--;
-                break;
-            case "ArrowRight":
-                //  if(CheckBoundaries(leftDir,topDir,outer,inner))
-                leftDir++;
+                if(IsPlayerWithinPositiveBoundaries(topDir, Constants.PLAYER_SIZE, this.Height))
+                {
+                    topDir++;
+                }
                 break;
             case "ArrowUp":
-                //  if(CheckBoundaries(leftDir,topDir,outer,inner))
-                topDir--;
+                if (IsPlayerWithinNegativeBoundaries(topDir, Constants.PLAYER_SIZE, 0))
+                {
+                    topDir--;
+                }
+                break;
+            case "ArrowLeft":
+                if (IsPlayerWithinNegativeBoundaries(leftDir, Constants.PLAYER_SIZE, 0))
+                {
+                    leftDir--;
+                }
+                break;
+            case "ArrowRight":
+                if(IsPlayerWithinPositiveBoundaries(leftDir, Constants.PLAYER_SIZE, this.Width))
+                {
+                    leftDir++;
+                }
                 break;
             default:
                 break;
@@ -157,40 +165,21 @@
             Line line9 = new Line(outer, Height - inner, inner, Height - inner, 3, "#A52A2A");
             await DrawLine(_context, line9);
 
+            // Player
             await _context.ClearRectAsync(leftDir-10, topDir-10, 20, 20);
             Dot dot = new Dot(leftDir, topDir, 5, 12, Math.PI * 2, "blue");
             await DrawDot(_context, dot);
             await _context.EndBatchAsync();
-
-        //player
-        
-
-        
-
-        
     }
 
-    private bool CheckBoundaries(int xPlayer,int yPlayer,int outer,int inner)
+    private bool IsPlayerWithinPositiveBoundaries(int pos, int playerSize, int canvasMax)
     {
-        //bottom row
-        if (yPlayer < inner && xPlayer == outer || xPlayer == Width)
-            return true;
+        return !(pos + playerSize >= canvasMax);
+    }
 
-        //left column
-        if (yPlayer >= inner && yPlayer <= Height - inner)
-            if (xPlayer == outer || xPlayer == inner)
-                return true;
-
-        //top row
-        if (yPlayer > Height - inner && xPlayer == outer || xPlayer == Width)
-            return true;
-
-        //right column
-        if (yPlayer >= inner && yPlayer <= Height - inner)
-            if (xPlayer == Width-inner || xPlayer == Width)
-                return true;
-
-        return false;
+    private bool IsPlayerWithinNegativeBoundaries(int pos, int playerSize, int canvasMin)
+    {
+        return !(pos - playerSize <= 0);
     }
 
     public static async Task DrawLine(Canvas2DContext context, Line line)
