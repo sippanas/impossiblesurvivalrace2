@@ -47,10 +47,9 @@
     </ul>
 
     <button id="buttonCenter3" class="btn btn-success" hidden="@(!IsCreator)" @onclick="Startgame">Start game</button>
-   
 </div>
 
-<div class="form-group" hidden="@(!gameStarted)">
+<div @ref=@(testRef) tabindex="1" @onkeydown="@Move" hidden="@gameStarted">
 <BECanvas Width="@Width" Height="@Height"  @ref="_canvasReference"> </BECanvas>
 </div>
 
@@ -58,8 +57,8 @@
     //map variables
     Canvas2DContext _context;
     BECanvasComponent _canvasReference;
-    int outer;
-    int inner;
+    int outer=0;
+    int inner=30;
     int Width=1400;
     int Height=500;
     string mapColor="#9F8170";
@@ -87,46 +86,87 @@
     private List<string> messages = new List<string>();
     private Player winner = new Player();
 
+    int leftDir=10;
+    int topDir=470;
+    private ElementReference testRef;
+
+    Task Move(KeyboardEventArgs e)
+    {
+        switch(e.Code)
+        {
+            case "ArrowDown":
+                //   if(CheckBoundaries(leftDir,topDir,outer,inner))
+                topDir++;
+                break;
+            case "ArrowLeft":
+                //  if(CheckBoundaries(leftDir,topDir,outer,inner))
+                leftDir--;
+                break;
+            case "ArrowRight":
+                //  if(CheckBoundaries(leftDir,topDir,outer,inner))
+                leftDir++;
+                break;
+            case "ArrowUp":
+                //  if(CheckBoundaries(leftDir,topDir,outer,inner))
+                topDir--;
+                break;
+            default:
+                break;
+        }
+        return Task.CompletedTask;
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        outer=0;
-        inner = 30;
         this._context = await _canvasReference.CreateCanvas2DAsync();
 
-        //isorinis loopas
-        Line line1 = new Line(outer, outer, outer, Height, 3, mapColor);
-        await DrawLine(_context, line1);
+        if (firstRender)
+        {
+            await testRef.FocusAsync();
 
-        Line line2 = new Line(outer, Height, Width, Height, 3, mapColor);
-        await DrawLine(_context, line2);
+            //isorinis loopas
+            Line line1 = new Line(outer, outer, outer, Height, 3, mapColor);
+            await DrawLine(_context, line1);
 
-        Line line3 = new Line(Width, Height, Width, outer, 3, mapColor);
-        await DrawLine(_context, line3);
+            Line line2 = new Line(outer, Height, Width, Height, 3, mapColor);
+            await DrawLine(_context, line2);
 
-        Line line4 = new Line(Width, outer, outer, outer, 3, mapColor);
-        await DrawLine(_context, line4);
+            Line line3 = new Line(Width, Height, Width, outer, 3, mapColor);
+            await DrawLine(_context, line3);
 
-        //vidinis loopas
-        Line line5 = new Line(inner, inner, inner, Height-inner, 3, mapColor);
-        await DrawLine(_context, line5);
+            Line line4 = new Line(Width, outer, outer, outer, 3, mapColor);
+            await DrawLine(_context, line4);
 
-        Line line6 = new Line(inner, Height-inner, Width-inner, Height-inner, 3, mapColor);
-        await DrawLine(_context, line6);
+            //vidinis loopas
+            Line line5 = new Line(inner, inner, inner, Height - inner, 3, mapColor);
+            await DrawLine(_context, line5);
 
-        Line line7 = new Line(Width-inner, Height-inner, Width-inner, inner, 3, mapColor);
-        await DrawLine(_context, line7);
+            Line line6 = new Line(inner, Height - inner, Width - inner, Height - inner, 3, mapColor);
+            await DrawLine(_context, line6);
 
-        Line line8 = new Line(Width-inner, inner,inner, inner, 3, mapColor);
-        await DrawLine(_context, line8);
+            Line line7 = new Line(Width - inner, Height - inner, Width - inner, inner, 3, mapColor);
+            await DrawLine(_context, line7);
 
-        startLineCenterY = Height - inner;
-        startLineCenterX=(inner-outer)/ 2;
+            Line line8 = new Line(Width - inner, inner, inner, inner, 3, mapColor);
+            await DrawLine(_context, line8);
 
-        //start line
-        Line line9 = new Line(outer, Height - inner, inner, Height - inner, 3, "#A52A2A");
-        await DrawLine(_context, line9);
+            startLineCenterY = Height - inner;
+            startLineCenterX = (inner - outer) / 2;
 
-        await SpawnPlayer(int.Parse(currentLobbyCode));
+            //start line
+            Line line9 = new Line(outer, Height - inner, inner, Height - inner, 3, "#A52A2A");
+            await DrawLine(_context, line9);
+
+            //entity to remove movement lines
+            Dot dot1 = new Dot(startLineCenterX, startLineCenterY+50, 5, 12, Math.PI * 2, "#EFDECD");
+            await DrawDot(_context,dot1);
+        }
+
+        //player
+        Dot dot = new Dot(leftDir, topDir, 5, 12, Math.PI * 2, "blue");
+        await DrawDot(_context,dot);
+
+        
     }
 
     private bool CheckBoundaries(int xPlayer,int yPlayer,int outer,int inner)
@@ -162,6 +202,7 @@
         // set line color
         await context.SetStrokeStyleAsync(line.color);
         await context.StrokeAsync();
+       //  await context.EndBatchAsync();
     }
 
     public static async Task DrawDot(Canvas2DContext context, Dot dot)
