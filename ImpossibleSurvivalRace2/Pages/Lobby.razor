@@ -120,8 +120,8 @@
     {
         this._context = await _canvasReference.CreateCanvas2DAsync();
 
-        if (firstRender)
-        {
+            await _context.BeginBatchAsync();
+
             await testRef.FocusAsync();
 
             //isorinis loopas
@@ -157,14 +157,15 @@
             Line line9 = new Line(outer, Height - inner, inner, Height - inner, 3, "#A52A2A");
             await DrawLine(_context, line9);
 
-            //entity to remove movement lines
-            Dot dot1 = new Dot(startLineCenterX, startLineCenterY+50, 5, 12, Math.PI * 2, "#EFDECD");
-            await DrawDot(_context,dot1);
-        }
+            await _context.ClearRectAsync(leftDir-10, topDir-10, 20, 20);
+            Dot dot = new Dot(leftDir, topDir, 5, 12, Math.PI * 2, "blue");
+            await DrawDot(_context, dot);
+            await _context.EndBatchAsync();
 
         //player
-        Dot dot = new Dot(leftDir, topDir, 5, 12, Math.PI * 2, "blue");
-        await DrawDot(_context,dot);
+        
+
+        
 
         
     }
