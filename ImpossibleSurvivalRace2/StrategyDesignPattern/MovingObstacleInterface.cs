@@ -1,6 +1,6 @@
 ﻿namespace ImpossibleSurvivalRace2.DesignPattern
 {
-    public interface MovementContextInterface
+    public interface MovingObstacleInterface
     {
         void SetStrategy(MovementInterface strategy);
         void ExecuteStrategy();

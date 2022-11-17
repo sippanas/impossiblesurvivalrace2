@@ -1,13 +1,13 @@
 ﻿namespace ImpossibleSurvivalRace2.DesignPattern
 {
-    public class MovementContext: MovementContextInterface
+    public class MovingObstacle: MovingObstacleInterface
     {
         private MovementInterface _strategy;
 
-        public MovementContext()
+        public MovingObstacle()
         { }
 
-        public MovementContext(MovementInterface strategy)
+        public MovingObstacle(MovementInterface strategy)
         {
             this._strategy = strategy;
         }
