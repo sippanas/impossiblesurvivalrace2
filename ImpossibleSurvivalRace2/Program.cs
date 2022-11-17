@@ -3,6 +3,16 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.ResponseCompression;
 using ImpossibleSurvivalRace2.Server.Hubs;
 using ImpossibleSurvivalRace2.Services;
+using ImpossibleSurvivalRace2.DesignPattern;
+
+MovementContext move = new MovementContext(new WanderingMovement());
+move.ExecuteStrategy();
+move = new MovementContext(new CircleMovement());
+move.ExecuteStrategy();
+move = new MovementContext(new StrafeMovement());
+move.ExecuteStrategy();
+move = new MovementContext(new SlowStrafeMovement());
+move.ExecuteStrategy();
 
 var builder = WebApplication.CreateBuilder(args);
 

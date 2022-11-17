@@ -348,4 +348,11 @@
             await hubConnection.DisposeAsync();
         }
     }
+
+    public enum Movement {
+        Wandering,
+        Strafe,
+        SlowStrafe,
+        Follow
+    }
 }
