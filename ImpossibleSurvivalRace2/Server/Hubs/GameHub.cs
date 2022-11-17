@@ -6,19 +6,9 @@ namespace ImpossibleSurvivalRace2.Server.Hubs
 {
     public class GameHub : Hub<IGameHub>
     {
-        private readonly ILobbyService _lobbyService;
+        private readonly LobbyService _lobbyService = LobbyService.getInstance();
 
-        public GameHub(ILobbyService lobbyService)
-        {
-            _lobbyService = lobbyService;
-        }
-
-        //public async Task<List<Player>> GetPlayers(int lobbyCode)
-        //{
-        //    var players=await _lobbyService.GetPlayers(lobbyCode);
-        //    await Clients.Group(lobbyCode.ToString()).CreateLobby($"There are {_lobbyService.GetPlayers(lobbyCode)} players.",players.Count().ToString());
-        //    return await _lobbyService.GetPlayers(lobbyCode);
-        //}
+        public GameHub() { }
 
         public override async Task<Task> OnDisconnectedAsync(Exception? exception)
         {
