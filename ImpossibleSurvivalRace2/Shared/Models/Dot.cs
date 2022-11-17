@@ -11,7 +11,6 @@
             startAngle = strAngle;
             endAngle = enAngle;
             color = col;
-
         }
         public double startX { get; set; }
         public double startY { get; set; }

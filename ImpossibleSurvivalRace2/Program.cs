@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.ResponseCompression;
 using ImpossibleSurvivalRace2.Server.Hubs;
 using ImpossibleSurvivalRace2.Services;
 using ImpossibleSurvivalRace2.DesignPattern;
+using ImpossibleSurvivalRace2.Shared.Models;
 
 MovementContext move = new MovementContext(new WanderingMovement());
 move.ExecuteStrategy();
@@ -13,6 +14,19 @@ move = new MovementContext(new StrafeMovement());
 move.ExecuteStrategy();
 move = new MovementContext(new SlowStrafeMovement());
 move.ExecuteStrategy();
+
+// ------------ Factory method
+Console.WriteLine();
+List<Garage> garages = new List<Garage>();
+garages.Add(new CarGarage());
+garages.Add(new TankGarage());
+
+foreach(Garage garage in garages)
+{
+    Vehicle vehicle = garage.Build();
+    Console.WriteLine($"Built {vehicle.GetType().Name}");
+}
+// ------------
 
 var builder = WebApplication.CreateBuilder(args);
 
