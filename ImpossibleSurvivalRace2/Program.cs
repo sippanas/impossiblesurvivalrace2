@@ -4,15 +4,31 @@ using Microsoft.AspNetCore.ResponseCompression;
 using ImpossibleSurvivalRace2.Server.Hubs;
 using ImpossibleSurvivalRace2.Services;
 using ImpossibleSurvivalRace2.DesignPattern;
+using ImpossibleSurvivalRace2.Shared.Models;
 
-MovementContext move = new MovementContext(new WanderingMovement());
+//strategy
+Console.WriteLine("Strategy pattern testing");
+MovingObstacle move = new MovingObstacle(new WanderingMovement());
 move.ExecuteStrategy();
-move = new MovementContext(new CircleMovement());
+move = new MovingObstacle(new CircleMovement());
 move.ExecuteStrategy();
-move = new MovementContext(new StrafeMovement());
+move = new MovingObstacle(new StrafeMovement());
 move.ExecuteStrategy();
-move = new MovementContext(new SlowStrafeMovement());
+move = new MovingObstacle(new SlowStrafeMovement());
 move.ExecuteStrategy();
+
+//prototype
+Console.WriteLine("Prototype pattern testing");
+List<Fuel> fuelManager = new List<Fuel>();
+LowValueTank oneLow = new LowValueTank(10);
+LowValueTank twoLow = new LowValueTank(5);
+HighValueTank oneHigh=new HighValueTank(40);
+HighValueTank twoHigh = new HighValueTank(60);
+
+LowValueTank oneLowCloned = oneLow.Clone() as LowValueTank;
+LowValueTank twoLowCloned = twoLow.Clone() as LowValueTank;
+HighValueTank oneHighCloned = oneHigh.Clone() as HighValueTank;
+HighValueTank twoHighCloned = twoHigh.Clone() as HighValueTank;
 
 var builder = WebApplication.CreateBuilder(args);
 

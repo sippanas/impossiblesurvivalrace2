@@ -1,7 +1,9 @@
 ﻿namespace ImpossibleSurvivalRace2.Shared.Models
 {
-    public class Fuel
+    public abstract class Fuel
     {
         public int Quantity { get; set; }
+
+        public abstract Fuel Clone();
     }
 }
