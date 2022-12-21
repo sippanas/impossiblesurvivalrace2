@@ -46,7 +46,7 @@
         }
     </ul>
 
-    <button id="buttonCenter3" class="btn btn-success" hidden="@(!IsCreator)" @onclick="Startgame">Start game</button>
+    <button id="buttonCenter3" class="btn btn-success" hidden="@(!IsCreator)" @onclick="StartGameAsHost">Start game</button>
 </div>
 
 <div @ref=@(testRef) tabindex="1" @onkeydown="@Move" hidden="@(!gameStarted)">
@@ -203,14 +203,14 @@
     }
 
     // Method used for host player
-    public async void Startgame()
+    public async void StartGameAsHost()
     {
         gameStarted = true;
 
         try
         {
             await hubConnection.InvokeAsync("GameStart", currentLobbyCode);
-            Console.WriteLine($"Current Lobby Code: {currentLobbyCode}");
+            Console.WriteLine($"Lobby Code: {currentLobbyCode} | Game has started");
         }
         catch(Exception e)
         {
