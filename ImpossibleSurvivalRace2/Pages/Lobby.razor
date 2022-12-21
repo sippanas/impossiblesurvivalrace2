@@ -157,13 +157,14 @@
         if (gameStarted)
         {
             // Drawing local player
-            await DrawPlayer(this.player, this._context, leftDir, topDir, true);
+            await DrawPlayer(this.player, this._context, leftDir, topDir, isLocalPlayer: true);
 
+            // Drawing other players in the lobby
             hubConnection.On<string, Player, int, int>("PlayerMovedAction", async (lobby, otherPlayer, ox, oy) =>
             {
                 if (otherPlayer.ConnectionId != this.player.ConnectionId)
                 {
-                    await DrawPlayer(otherPlayer, this._context, ox, oy, false);
+                    await DrawPlayer(otherPlayer, this._context, ox, oy, isLocalPlayer: false);
                     Console.WriteLine($"[Lobby #{currentLobbyCode}] Player [{player.UserName}] has invoked players [{otherPlayer.UserName}] movement");
                 }
             });
@@ -313,10 +314,8 @@
 
     public async Task DrawPlayer(Player player, Canvas2DContext context, int x, int y, bool isLocalPlayer)
     {
-        //await context.ClearRectAsync(x - 10, y - 10, 20, 20);
         Dot dot = new Dot(x, y, 5, 0, Math.PI * 2, player.Color);
         await DrawDot(context, dot);
-        await context.EndBatchAsync();
 
         if(isLocalPlayer && ServerUtils.CanUpdate())
         {
