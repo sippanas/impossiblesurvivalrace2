@@ -9,6 +9,7 @@
 @using ImpossibleSurvivalRace2.Shared.Models
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JsRuntime
+@using ProxyDesignPattern
 
 <style>
     body {
@@ -46,7 +47,7 @@
         }
     </ul>
 
-    <button id="buttonCenter3" class="btn btn-success" hidden="@(!IsCreator)" @onclick="StartGameAsHost">Start game</button>
+    <button id="buttonCenter3" class="btn btn-success" hidden="@(!IsCreator)" @onclick="Startgame">Start game</button>
 </div>
 
 <div @ref=@(testRef) tabindex="1" @onkeydown="@Move" hidden="@(!gameStarted)">
@@ -89,6 +90,8 @@
     int topDir=470;
     private ElementReference testRef;
 
+    MovementProxy proxy = new MovementProxy();
+
     Task Move(KeyboardEventArgs e)
     {
         switch(e.Code)
@@ -96,25 +99,25 @@
             case "ArrowDown":
                 if(IsPlayerWithinPositiveBoundaries(topDir, Constants.PLAYER_SIZE, this.Height))
                 {
-                    topDir++;
+                    topDir = proxy.Down(topDir);
                 }
                 break;
             case "ArrowUp":
                 if (IsPlayerWithinNegativeBoundaries(topDir, Constants.PLAYER_SIZE, 0))
                 {
-                    topDir--;
+                    topDir = proxy.Up(topDir);
                 }
                 break;
             case "ArrowLeft":
                 if (IsPlayerWithinNegativeBoundaries(leftDir, Constants.PLAYER_SIZE, 0))
                 {
-                    leftDir--;
+                    leftDir = proxy.Left(leftDir);
                 }
                 break;
             case "ArrowRight":
                 if(IsPlayerWithinPositiveBoundaries(leftDir, Constants.PLAYER_SIZE, this.Width))
                 {
-                    leftDir++;
+                    leftDir = proxy.Right(leftDir);
                 }
                 break;
             default:
@@ -127,51 +130,51 @@
     {
         this._context = await _canvasReference.CreateCanvas2DAsync();
 
-        await _context.BeginBatchAsync();
+            await _context.BeginBatchAsync();
 
-        await testRef.FocusAsync();
+            await testRef.FocusAsync();
 
-        //isorinis loopas
-        Line line1 = new Line(outer, outer, outer, Height, 3, mapColor);
-        await DrawLine(_context, line1);
+            //isorinis loopas
+            Line line1 = new Line(outer, outer, outer, Height, 3, mapColor);
+            await DrawLine(_context, line1);
 
-        Line line2 = new Line(outer, Height, Width, Height, 3, mapColor);
-        await DrawLine(_context, line2);
+            Line line2 = new Line(outer, Height, Width, Height, 3, mapColor);
+            await DrawLine(_context, line2);
 
-        Line line3 = new Line(Width, Height, Width, outer, 3, mapColor);
-        await DrawLine(_context, line3);
+            Line line3 = new Line(Width, Height, Width, outer, 3, mapColor);
+            await DrawLine(_context, line3);
 
-        Line line4 = new Line(Width, outer, outer, outer, 3, mapColor);
-        await DrawLine(_context, line4);
+            Line line4 = new Line(Width, outer, outer, outer, 3, mapColor);
+            await DrawLine(_context, line4);
 
-        //vidinis loopas
-        Line line5 = new Line(inner, inner, inner, Height - inner, 3, mapColor);
-        await DrawLine(_context, line5);
+            //vidinis loopas
+            Line line5 = new Line(inner, inner, inner, Height - inner, 3, mapColor);
+            await DrawLine(_context, line5);
 
-        Line line6 = new Line(inner, Height - inner, Width - inner, Height - inner, 3, mapColor);
-        await DrawLine(_context, line6);
+            Line line6 = new Line(inner, Height - inner, Width - inner, Height - inner, 3, mapColor);
+            await DrawLine(_context, line6);
 
-        Line line7 = new Line(Width - inner, Height - inner, Width - inner, inner, 3, mapColor);
-        await DrawLine(_context, line7);
+            Line line7 = new Line(Width - inner, Height - inner, Width - inner, inner, 3, mapColor);
+            await DrawLine(_context, line7);
 
-        Line line8 = new Line(Width - inner, inner, inner, inner, 3, mapColor);
-        await DrawLine(_context, line8);
+            Line line8 = new Line(Width - inner, inner, inner, inner, 3, mapColor);
+            await DrawLine(_context, line8);
 
-        startLineCenterY = Height - inner;
-        startLineCenterX = (inner - outer) / 2;
+            startLineCenterY = Height - inner;
+            startLineCenterX = (inner - outer) / 2;
 
-        //start line
-        Line line9 = new Line(outer, Height - inner, inner, Height - inner, 3, "#A52A2A");
-        await DrawLine(_context, line9);
+            //start line
+            Line line9 = new Line(outer, Height - inner, inner, Height - inner, 3, "#A52A2A");
+            await DrawLine(_context, line9);
 
-        // Player
-        await _context.ClearRectAsync(leftDir-10, topDir-10, 20, 20);
-        Dot dot = new Dot(leftDir, topDir, 5, 12, Math.PI * 2, "blue");
-        await DrawDot(_context, dot);
-        await _context.EndBatchAsync();
+            // Player
+            await _context.ClearRectAsync(leftDir-10, topDir-10, 20, 20);
+            Dot dot = new Dot(leftDir, topDir, 5, 12, Math.PI * 2, "blue");
+            await DrawDot(_context, dot);
+            await _context.EndBatchAsync();
     }
 
-    private bool IsPlayerWithinPositiveBoundaries(int pos, int playerSize, int canvasMax)
+    public bool IsPlayerWithinPositiveBoundaries(int pos, int playerSize, int canvasMax)
     {
         return !(pos + playerSize >= canvasMax);
     }
@@ -191,7 +194,7 @@
         // set line color
         await context.SetStrokeStyleAsync(line.color);
         await context.StrokeAsync();
-        //  await context.EndBatchAsync();
+       //  await context.EndBatchAsync();
     }
 
     public static async Task DrawDot(Canvas2DContext context, Dot dot)
@@ -202,24 +205,7 @@
         await context.SetFillStyleAsync(dot.color);
     }
 
-    // Method used for host player
-    public async void StartGameAsHost()
-    {
-        gameStarted = true;
-
-        try
-        {
-            await hubConnection.InvokeAsync("GameStart", currentLobbyCode);
-            Console.WriteLine($"Lobby Code: {currentLobbyCode} | Game has started");
-        }
-        catch(Exception e)
-        {
-            throw;
-        }
-    }
-
-    // Method used for joined player
-    public void StartGameAsPlayer()
+    public void Startgame()
     {
         gameStarted = true;
     }
@@ -230,6 +216,8 @@
             .WithUrl(NavigationManager.ToAbsoluteUri("/gamehub"))
             .WithAutomaticReconnect()
             .Build();
+
+        // TODO: Check if player was in a lobby previously
 
         hubConnection.On<string>("JoinLobby", (message) =>
         {
@@ -242,13 +230,6 @@
         {
             var encodedMsg = $"{message}";
             messages.Add(encodedMsg);
-            InvokeAsync(StateHasChanged);
-        });
-
-        // Game actions
-        hubConnection.On<string>("GameStartedAction", (lobbyCode) =>
-        {
-            this.StartGameAsPlayer();
             InvokeAsync(StateHasChanged);
         });
 
