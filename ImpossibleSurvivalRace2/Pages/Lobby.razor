@@ -165,7 +165,7 @@
             await DrawLine(_context, line9);
 
             // Player
-            await _context.ClearRectAsync(leftDir-10, topDir-10, 10, 10);
+            await _context.ClearRectAsync(leftDir-10, topDir-10, 20, 20);
             Dot dot = new Dot(leftDir, topDir, 5, 12, Math.PI * 2, "blue");
             await DrawDot(_context, dot);
             await _context.EndBatchAsync();
