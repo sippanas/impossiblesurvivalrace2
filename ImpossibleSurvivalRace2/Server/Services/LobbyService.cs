@@ -1,5 +1,4 @@
-﻿using ImpossibleSurvivalRace2.Server.Hubs;
-using ImpossibleSurvivalRace2.Shared.Models;
+﻿using ImpossibleSurvivalRace2.Shared.Models;
 
 namespace ImpossibleSurvivalRace2.Services
 {
