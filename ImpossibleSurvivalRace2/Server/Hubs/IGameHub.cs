@@ -1,4 +1,6 @@
-﻿namespace ImpossibleSurvivalRace2.Server.Hubs
+﻿using ImpossibleSurvivalRace2.Shared.Models;
+
+namespace ImpossibleSurvivalRace2.Server.Hubs
 {
     public interface IGameHub
     {
@@ -7,5 +9,10 @@
         Task JoinLobby(string message);
         Task GetPlayerCount(int playerCount);
         Task RemoveFromLobby(string message);
+
+        // Game actions
+        // ------------
+        // SpawnPlayer
+        Task GameStartedAction(string lobbyCode);
     }
 }

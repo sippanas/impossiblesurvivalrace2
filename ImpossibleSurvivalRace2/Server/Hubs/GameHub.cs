@@ -27,7 +27,7 @@ namespace ImpossibleSurvivalRace2.Server.Hubs
             var lobbyCode = await _lobbyService.CreateLobby(player);
             await Groups.AddToGroupAsync(player.ConnectionId, lobbyCode.ToString());
 
-            await Clients.Group(lobbyCode.ToString()).CreateLobby($"{player.UserName} has created the lobby {lobbyCode}.", 
+            await Clients.Group(lobbyCode.ToString()).CreateLobby($"{player.UserName} has created the lobby {lobbyCode}.",
                 lobbyCode.ToString());
         }
 
@@ -40,6 +40,7 @@ namespace ImpossibleSurvivalRace2.Server.Hubs
                 await Groups.AddToGroupAsync(player.ConnectionId, lobbyCode);
 
                 await Clients.Group(lobbyCode).JoinLobby($"{player.UserName} has joined the lobby.");
+
             }
         }
 
@@ -60,5 +61,11 @@ namespace ImpossibleSurvivalRace2.Server.Hubs
         //        await Clients.Group(lobbyCode).RemoveFromLobby($"{player.UserName} has left the lobby");
         //    }
         //}
+
+// ----------------------------- Game actions
+        public async Task GameStart(string lobbyCode)
+        {
+            await Clients.Group(lobbyCode).GameStartedAction(lobbyCode);
+        }
     }
 }
