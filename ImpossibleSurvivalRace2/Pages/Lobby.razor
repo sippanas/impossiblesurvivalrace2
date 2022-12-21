@@ -7,25 +7,26 @@
 @using Microsoft.AspNetCore.SignalR.Client
 @using Blazor.Extensions.Canvas.Canvas2D
 @using ImpossibleSurvivalRace2.Shared.Models
+@using ImpossibleSurvivalRace2.Server
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JsRuntime
 @using ProxyDesignPattern
 
 <style>
     body {
-        background-color: #EFDECD ;
+        background-color: #EFDECD;
     }
 </style>
 
-<PageTitle>Lobby</PageTitle>
+<PageTitle>ImpossibleSurvivalRace2</PageTitle>
 
 <div class="form-group" hidden="@HasJoinedLobby">
     <div class="form-group">
         <label>
-            Username: 
+            Username:
             <input @bind="UserNameInput" placeholder="@inputUserWarningText" />
         </label>
-        <label> 
+        <label>
             Lobby code:
             <input @bind="codeInput" placeholder="@inputCodeWarningText" />
         </label>
@@ -47,29 +48,29 @@
         }
     </ul>
 
-    <button id="buttonCenter3" class="btn btn-success" hidden="@(!IsCreator)" @onclick="Startgame">Start game</button>
+    <button id="buttonCenter3" class="btn btn-success" hidden="@(!IsCreator)" @onclick="StartGameAsHost">Start game</button>
 </div>
 
 <div @ref=@(testRef) tabindex="1" @onkeydown="@Move" hidden="@(!gameStarted)">
-<BECanvas Width="@Width" Height="@Height"  @ref="_canvasReference"> </BECanvas>
+    <BECanvas Width="@Width" Height="@Height" @ref="_canvasReference"> </BECanvas>
 </div>
 
 @code {
     //map variables
     Canvas2DContext _context;
     BECanvasComponent _canvasReference;
-    int outer=0;
-    int inner=30;
-    int Width=1400;
-    int Height=500;
-    string mapColor="#9F8170";
+    int outer = 0;
+    int inner = 30;
+    int Width = 1400;
+    int Height = 500;
+    string mapColor = "#9F8170";
 
     int startLineCenterX;
     int startLineCenterY;
 
     //other variables
     private Player player = null;
-    private HubConnection? hubConnection;
+    public HubConnection? hubConnection;
 
     bool gameStarted = false;
     private bool HasJoinedLobby = false;
@@ -84,20 +85,19 @@
     private string? inputCodeWarningText;
 
     private List<string> messages = new List<string>();
-    private Player winner = new Player();
 
-    int leftDir=10;
-    int topDir=470;
+    int leftDir = 10;
+    int topDir = 470;
     private ElementReference testRef;
 
     MovementProxy proxy = new MovementProxy();
 
     Task Move(KeyboardEventArgs e)
     {
-        switch(e.Code)
+        switch (e.Code)
         {
             case "ArrowDown":
-                if(IsPlayerWithinPositiveBoundaries(topDir, Constants.PLAYER_SIZE, this.Height))
+                if (IsPlayerWithinPositiveBoundaries(topDir, Constants.PLAYER_SIZE, this.Height))
                 {
                     topDir = proxy.Down(topDir);
                 }
@@ -115,7 +115,7 @@
                 }
                 break;
             case "ArrowRight":
-                if(IsPlayerWithinPositiveBoundaries(leftDir, Constants.PLAYER_SIZE, this.Width))
+                if (IsPlayerWithinPositiveBoundaries(leftDir, Constants.PLAYER_SIZE, this.Width))
                 {
                     leftDir = proxy.Right(leftDir);
                 }
@@ -167,11 +167,23 @@
             Line line9 = new Line(outer, Height - inner, inner, Height - inner, 3, "#A52A2A");
             await DrawLine(_context, line9);
 
-            // Player
-            await _context.ClearRectAsync(leftDir-10, topDir-10, 20, 20);
-            Dot dot = new Dot(leftDir, topDir, 5, 12, Math.PI * 2, "blue");
-            await DrawDot(_context, dot);
-            await _context.EndBatchAsync();
+        // Player drawing
+        if (gameStarted)
+        {
+            // Drawing local player
+            await DrawPlayer(this.player, this._context, leftDir, topDir, true);
+
+            // Checking if we can update from the server
+            hubConnection.On<string, Player, int, int>("PlayerMovedAction", async (lobby, otherPlayer, ox, oy) =>
+            {
+                if (otherPlayer.ConnectionId != this.player.ConnectionId)
+                {
+                    await DrawPlayer(otherPlayer, this._context, ox, oy, false);
+                    Console.WriteLine($"[Lobby #{currentLobbyCode}] Player [{player.UserName}] has invoked players [{otherPlayer.UserName}] movement");
+                }
+            });
+        }
+        //await _context.EndBatchAsync();
     }
 
     public bool IsPlayerWithinPositiveBoundaries(int pos, int playerSize, int canvasMax)
@@ -205,9 +217,20 @@
         await context.SetFillStyleAsync(dot.color);
     }
 
-    public void Startgame()
+    // Method used for host player
+    public async void StartGameAsHost()
     {
         gameStarted = true;
+
+        try
+        {
+            await hubConnection.InvokeAsync("GameStart", currentLobbyCode);
+            Console.WriteLine($"Lobby Code: {currentLobbyCode} | Game has started");
+        }
+        catch (Exception e)
+        {
+            throw;
+        }
     }
 
     protected override async Task OnInitializedAsync()
@@ -216,8 +239,6 @@
             .WithUrl(NavigationManager.ToAbsoluteUri("/gamehub"))
             .WithAutomaticReconnect()
             .Build();
-
-        // TODO: Check if player was in a lobby previously
 
         hubConnection.On<string>("JoinLobby", (message) =>
         {
@@ -230,6 +251,15 @@
         {
             var encodedMsg = $"{message}";
             messages.Add(encodedMsg);
+            InvokeAsync(StateHasChanged);
+        });
+
+        // Game actions
+        // -------------
+        // GameStartedAction listener (waits for Game started signal from lobby host)
+        hubConnection.On<string>("GameStartedAction", (lobbyCode) =>
+        {
+            this.StartGameAsPlayer();
             InvokeAsync(StateHasChanged);
         });
 
@@ -294,39 +324,37 @@
         {
             int x;
             int y;
-            List<Player> currPlayers = new List<Player>();
-            string[] colorList = new string[] { "red", "purple", "green", "blue", "brown", "orange", "pink" };
-            string randomColor = colorList[random.Next(0, colorList.Length - 1)];
+            //List<Player> currPlayers = new List<Player>();
 
-         //   currPlayers = await lobbyService.GetPlayers(lobbyCode); neveikia
+            //   currPlayers = await lobbyService.GetPlayers(lobbyCode); neveikia
 
-            switch (currPlayers.Count())
-            {
-                case 0:
-                    x = startLineCenterX + 10 + currPlayers.Count() * 3;
-                    y = startLineCenterY + 5;
-                    Dot dot = new Dot(x, y, 5, 12, Math.PI * 2, randomColor);
-                    await DrawDot(_context, dot);
-                    break;
-                case 1:
-                    x = startLineCenterX + 10 + currPlayers.Count() * 3;
-                    y = startLineCenterY + 5;
-                    dot = new Dot(x, y, 5, 12, Math.PI * 2, randomColor);
-                    await DrawDot(_context, dot);
-                    break;
-                case 2:
-                    x = startLineCenterX + 10 + currPlayers.Count() * 3;
-                    y = startLineCenterY + 5;
-                    dot = new Dot(x, y, 5, 12, Math.PI * 2, randomColor);
-                    await DrawDot(_context, dot);
-                    break;
-                case 3:
-                    x = startLineCenterX + 10 + currPlayers.Count() * 3;
-                    y = startLineCenterY + 5;
-                    dot = new Dot(x, y, 5, 12, Math.PI * 2, randomColor);
-                    await DrawDot(_context, dot);
-                    break;
-            }
+            //switch (currPlayers.Count())
+            //{
+            //    case 0:
+            //        x = startLineCenterX + 10 + currPlayers.Count() * 3;
+            //        y = startLineCenterY + 5;
+            //        Dot dot = new Dot(x, y, 5, 12, Math.PI * 2, randomColor);
+            //        await DrawDot(_context, dot);
+            //        break;
+            //    case 1:
+            //        x = startLineCenterX + 10 + currPlayers.Count() * 3;
+            //        y = startLineCenterY + 5;
+            //        dot = new Dot(x, y, 5, 12, Math.PI * 2, randomColor);
+            //        await DrawDot(_context, dot);
+            //        break;
+            //    case 2:
+            //        x = startLineCenterX + 10 + currPlayers.Count() * 3;
+            //        y = startLineCenterY + 5;
+            //        dot = new Dot(x, y, 5, 12, Math.PI * 2, randomColor);
+            //        await DrawDot(_context, dot);
+            //        break;
+            //    case 3:
+            //        x = startLineCenterX + 10 + currPlayers.Count() * 3;
+            //        y = startLineCenterY + 5;
+            //        dot = new Dot(x, y, 5, 12, Math.PI * 2, randomColor);
+            //        await DrawDot(_context, dot);
+            //        break;
+            //}
         }
 
     }
@@ -335,11 +363,30 @@
     {
         if (this.player == null)
         {
+            string[] colorList = new string[] { "red", "purple", "green", "blue", "brown", "orange", "pink" };
+            string randomColor = colorList[random.Next(0, colorList.Length - 1)];
+
             player = new Player
             {
                 ConnectionId = hubConnection.ConnectionId,
-                UserName = userNameInput
+                UserName = userNameInput,
+                Color = randomColor
             };
+        }
+    }
+
+    public async Task DrawPlayer(Player player, Canvas2DContext context, int x, int y, bool isLocalPlayer)
+    {
+        await context.ClearRectAsync(x - 10, y - 10, 20, 20);
+        Dot dot = new Dot(x, y, 5, 12, Math.PI * 2, player.Color);
+        await DrawDot(context, dot);
+        await context.EndBatchAsync();
+
+        if(isLocalPlayer && ServerUtils.CanUpdate())
+        {
+            // If the player is local, we send others that his movement has updated
+            await hubConnection.InvokeAsync("MovePlayer", currentLobbyCode, player, x, y);
+            Console.WriteLine($"[Lobby #{currentLobbyCode}] Player [{player.UserName} | {player.Color}] has moved to ({x}, {y})");
         }
     }
 
@@ -352,7 +399,8 @@
         }
     }
 
-    public enum Movement {
+    public enum Movement
+    {
         Wandering,
         Strafe,
         SlowStrafe,

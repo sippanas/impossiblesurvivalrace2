@@ -67,5 +67,10 @@ namespace ImpossibleSurvivalRace2.Server.Hubs
         {
             await Clients.Group(lobbyCode).GameStartedAction(lobbyCode);
         }
+
+        public async Task MovePlayer(string lobbyCode, Player player, int x, int y)
+        {
+            await Clients.Group(lobbyCode).PlayerMovedAction(lobbyCode, player, x, y);
+        }
     }
 }

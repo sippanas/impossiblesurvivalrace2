@@ -14,5 +14,6 @@ namespace ImpossibleSurvivalRace2.Server.Hubs
         // ------------
         // SpawnPlayer
         Task GameStartedAction(string lobbyCode);
+        Task PlayerMovedAction(string lobbyCode, Player player, int x, int y);
     }
 }
