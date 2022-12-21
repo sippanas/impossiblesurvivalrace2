@@ -16,6 +16,12 @@
     body {
         background-color: #EFDECD;
     }
+
+    /* Values should match constants in Constants.cs file */
+    .canvas-div {
+        width: 1400px;
+        height: 500px;
+    }
 </style>
 
 <PageTitle>ImpossibleSurvivalRace2</PageTitle>
@@ -51,8 +57,8 @@
     <button id="buttonCenter3" class="btn btn-success" hidden="@(!IsCreator)" @onclick="StartGameAsHost">Start game</button>
 </div>
 
-<div @ref=@(testRef) tabindex="1" @onkeydown="@Move" hidden="@(!gameStarted)">
-    <BECanvas Width="@Width" Height="@Height" @ref="_canvasReference"> </BECanvas>
+<div class="canvas-div" @ref=@(testRef) tabindex="1" @onkeydown="@Move" hidden="@(!gameStarted)">
+    <BECanvas Width="@Constants.CANVAS_WIDTH" Height="@Constants.CANVAS_HEIGHT" @ref="_canvasReference"> </BECanvas>
 </div>
 
 @code {
@@ -61,8 +67,6 @@
     BECanvasComponent _canvasReference;
     int outer = 0;
     int inner = 30;
-    int Width = 1400;
-    int Height = 500;
     string mapColor = "#9F8170";
 
     int startLineCenterX;
@@ -81,6 +85,9 @@
     private string? UserNameInput;
     private string? codeInput;
 
+    // Key variables
+    private bool KeyIsPressed = false;
+
     private string? inputUserWarningText;
     private string? inputCodeWarningText;
 
@@ -94,10 +101,12 @@
 
     Task Move(KeyboardEventArgs e)
     {
+        KeyIsPressed = true;
+
         switch (e.Code)
         {
             case "ArrowDown":
-                if (IsPlayerWithinPositiveBoundaries(topDir, Constants.PLAYER_SIZE, this.Height))
+                if (IsPlayerWithinPositiveBoundaries(topDir, Constants.PLAYER_SIZE, Constants.CANVAS_HEIGHT))
                 {
                     topDir = proxy.Down(topDir);
                 }
@@ -115,7 +124,7 @@
                 }
                 break;
             case "ArrowRight":
-                if (IsPlayerWithinPositiveBoundaries(leftDir, Constants.PLAYER_SIZE, this.Width))
+                if (IsPlayerWithinPositiveBoundaries(leftDir, Constants.PLAYER_SIZE, Constants.CANVAS_WIDTH))
                 {
                     leftDir = proxy.Right(leftDir);
                 }
@@ -130,42 +139,19 @@
     {
         this._context = await _canvasReference.CreateCanvas2DAsync();
 
-        await _context.BeginBatchAsync();
+        //await testRef.FocusAsync();
 
-        await testRef.FocusAsync();
+        // If a key was pressed, we empty the canvas for redrawing
+        if (KeyIsPressed)
+        {
+            await _context.ClearRectAsync(0, 0, Constants.CANVAS_WIDTH, Constants.CANVAS_HEIGHT);
+            KeyIsPressed = false;
+        }
 
-        //isorinis loopas
-        Line line1 = new Line(outer, outer, outer, Height, 3, mapColor);
-        await DrawLine(_context, line1);
-
-        Line line2 = new Line(outer, Height, Width, Height, 3, mapColor);
-        await DrawLine(_context, line2);
-
-        Line line3 = new Line(Width, Height, Width, outer, 3, mapColor);
-        await DrawLine(_context, line3);
-
-        Line line4 = new Line(Width, outer, outer, outer, 3, mapColor);
-        await DrawLine(_context, line4);
-
-        //vidinis loopas
-        Line line5 = new Line(inner, inner, inner, Height - inner, 3, mapColor);
-        await DrawLine(_context, line5);
-
-        Line line6 = new Line(inner, Height - inner, Width - inner, Height - inner, 3, mapColor);
-        await DrawLine(_context, line6);
-
-        Line line7 = new Line(Width - inner, Height - inner, Width - inner, inner, 3, mapColor);
-        await DrawLine(_context, line7);
-
-        Line line8 = new Line(Width - inner, inner, inner, inner, 3, mapColor);
-        await DrawLine(_context, line8);
-
-        startLineCenterY = Height - inner;
-        startLineCenterX = (inner - outer) / 2;
-
-        //start line
-        Line line9 = new Line(outer, Height - inner, inner, Height - inner, 3, "#A52A2A");
-        await DrawLine(_context, line9);
+        // Outer stroke rectangle
+        await _context.StrokeRectAsync(0, 0, Constants.CANVAS_WIDTH, Constants.CANVAS_HEIGHT);
+        // Inner stroke rectangle
+        await _context.StrokeRectAsync(50, 50, Constants.CANVAS_WIDTH - 100, Constants.CANVAS_HEIGHT - 100);
 
         // Player drawing
         if (gameStarted)
@@ -173,7 +159,6 @@
             // Drawing local player
             await DrawPlayer(this.player, this._context, leftDir, topDir, true);
 
-            // Checking if we can update from the server
             hubConnection.On<string, Player, int, int>("PlayerMovedAction", async (lobby, otherPlayer, ox, oy) =>
             {
                 if (otherPlayer.ConnectionId != this.player.ConnectionId)
@@ -183,7 +168,6 @@
                 }
             });
         }
-        //await _context.EndBatchAsync();
     }
 
     public bool IsPlayerWithinPositiveBoundaries(int pos, int playerSize, int canvasMax)
@@ -196,22 +180,9 @@
         return !(pos - playerSize <= 0);
     }
 
-    public static async Task DrawLine(Canvas2DContext context, Line line)
-    {
-        await context.BeginPathAsync();
-        await context.MoveToAsync(line.startX, line.startY);
-        await context.LineToAsync(line.endX, line.endY);
-        await context.SetLineWidthAsync(line.thickness);
-
-        // set line color
-        await context.SetStrokeStyleAsync(line.color);
-        await context.StrokeAsync();
-        //  await context.EndBatchAsync();
-    }
-
     public static async Task DrawDot(Canvas2DContext context, Dot dot)
     {
-        await context.MoveToAsync(dot.startX, dot.startY);
+        await context.BeginPathAsync();
         await context.ArcAsync(dot.startX, dot.startY, dot.radius, dot.startAngle, dot.endAngle, true);
         await context.FillAsync();
         await context.SetFillStyleAsync(dot.color);
@@ -227,7 +198,7 @@
             await hubConnection.InvokeAsync("GameStart", currentLobbyCode);
             Console.WriteLine($"Lobby Code: {currentLobbyCode} | Game has started");
         }
-        catch (Exception e)
+        catch (Exception)
         {
             throw;
         }
@@ -322,60 +293,19 @@
                 inputUserWarningText = "Username is not valid";
         }
     }
-    public Random random { get { return new Random(); } }
-
-    private async Task SpawnPlayer(int lobbyCode)
-    {
-        if (HasJoinedLobby && !HasBeenSpawned)
-        {
-            int x;
-            int y;
-            //List<Player> currPlayers = new List<Player>();
-
-            //   currPlayers = await lobbyService.GetPlayers(lobbyCode); neveikia
-
-            //switch (currPlayers.Count())
-            //{
-            //    case 0:
-            //        x = startLineCenterX + 10 + currPlayers.Count() * 3;
-            //        y = startLineCenterY + 5;
-            //        Dot dot = new Dot(x, y, 5, 12, Math.PI * 2, randomColor);
-            //        await DrawDot(_context, dot);
-            //        break;
-            //    case 1:
-            //        x = startLineCenterX + 10 + currPlayers.Count() * 3;
-            //        y = startLineCenterY + 5;
-            //        dot = new Dot(x, y, 5, 12, Math.PI * 2, randomColor);
-            //        await DrawDot(_context, dot);
-            //        break;
-            //    case 2:
-            //        x = startLineCenterX + 10 + currPlayers.Count() * 3;
-            //        y = startLineCenterY + 5;
-            //        dot = new Dot(x, y, 5, 12, Math.PI * 2, randomColor);
-            //        await DrawDot(_context, dot);
-            //        break;
-            //    case 3:
-            //        x = startLineCenterX + 10 + currPlayers.Count() * 3;
-            //        y = startLineCenterY + 5;
-            //        dot = new Dot(x, y, 5, 12, Math.PI * 2, randomColor);
-            //        await DrawDot(_context, dot);
-            //        break;
-            //}
-        }
-
-    }
 
     private void CreatePlayer(string userNameInput)
     {
         if (this.player == null)
         {
+            var random = new Random();
             string[] colorList = new string[] { "red", "purple", "green", "blue", "brown", "orange", "pink" };
             string randomColor = colorList[random.Next(0, colorList.Length - 1)];
 
             player = new Player
             {
                 ConnectionId = hubConnection.ConnectionId,
-                UserName = userNameInput,
+                UserName = userNameInput.Trim(),
                 Color = randomColor
             };
         }
@@ -383,8 +313,8 @@
 
     public async Task DrawPlayer(Player player, Canvas2DContext context, int x, int y, bool isLocalPlayer)
     {
-        await context.ClearRectAsync(x - 10, y - 10, 20, 20);
-        Dot dot = new Dot(x, y, 5, 12, Math.PI * 2, player.Color);
+        //await context.ClearRectAsync(x - 10, y - 10, 20, 20);
+        Dot dot = new Dot(x, y, 5, 0, Math.PI * 2, player.Color);
         await DrawDot(context, dot);
         await context.EndBatchAsync();
 
