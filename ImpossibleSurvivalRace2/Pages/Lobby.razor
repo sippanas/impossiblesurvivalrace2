@@ -157,17 +157,8 @@
         if (gameStarted)
         {
             // Drawing local player
+            // (Search for PlayerMovedAction for other players drawing in lobby)
             await DrawPlayer(this.player, this._context, leftDir, topDir, isLocalPlayer: true);
-
-            // Drawing other players in the lobby
-            hubConnection.On<string, Player, int, int>("PlayerMovedAction", async (lobby, otherPlayer, ox, oy) =>
-            {
-                if (otherPlayer.ConnectionId != this.player.ConnectionId)
-                {
-                    await DrawPlayer(otherPlayer, this._context, ox, oy, isLocalPlayer: false);
-                    Console.WriteLine($"[Lobby #{currentLobbyCode}] Player [{player.UserName}] has invoked players [{otherPlayer.UserName}] movement");
-                }
-            });
         }
     }
 
@@ -239,6 +230,16 @@
         {
             this.StartGameAsPlayer();
             InvokeAsync(StateHasChanged);
+        });
+
+        // PlayerMovedAction listener
+        hubConnection.On<string, Player, int, int>("PlayerMovedAction", async (lobby, otherPlayer, ox, oy) =>
+        {
+            if (otherPlayer.ConnectionId != this.player.ConnectionId)
+            {
+                await DrawPlayer(otherPlayer, this._context, ox, oy, isLocalPlayer: false);
+                Console.WriteLine($"[Lobby #{currentLobbyCode}] Player [{player.UserName}] has invoked players [{otherPlayer.UserName}] movement");
+            }
         });
 
         await hubConnection.StartAsync();
