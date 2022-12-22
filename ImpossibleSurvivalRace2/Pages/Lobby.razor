@@ -76,7 +76,7 @@
     int startLineCenterX;
     int startLineCenterY;
 
-    //other variables
+    // Player
     private Player player = null;
     private PlayerState playerState =  new PlayerState("-");
     public HubConnection? hubConnection;
@@ -89,9 +89,6 @@
 
     private string? UserNameInput;
     private string? codeInput;
-
-    // Key variables
-    private bool KeyIsPressed = false;
 
     private string? inputUserWarningText;
     private string? inputCodeWarningText;
@@ -107,8 +104,6 @@
 
     Task Move(KeyboardEventArgs e)
     {
-        KeyIsPressed = true;
-
         switch (e.Code)
         {
             case "ArrowDown":
@@ -187,13 +182,6 @@
 
 
         //await testRef.FocusAsync();
-
-        // If a key was pressed, we empty the canvas for redrawing
-        if (KeyIsPressed)
-        {
-            await _context.ClearRectAsync(0, 0, Constants.CANVAS_WIDTH, Constants.CANVAS_HEIGHT);
-            KeyIsPressed = false;
-        }
 
         // Outer stroke rectangle
         await _context.StrokeRectAsync(0, 0, Constants.CANVAS_WIDTH, Constants.CANVAS_HEIGHT);
@@ -284,6 +272,9 @@
         {
             if (otherPlayer.ConnectionId != this.player.ConnectionId)
             {
+                // Clear player from old position
+                await _context.ClearRectAsync(otherPlayer.OldServerX - Constants.PLAYER_SIZE, otherPlayer.OldServerY - Constants.PLAYER_SIZE, Constants.PLAYER_SIZE * 2, Constants.PLAYER_SIZE * 2);
+
                 await DrawPlayer(otherPlayer, this._context, ox, oy, isLocalPlayer: false);
                 Console.WriteLine($"[Lobby #{currentLobbyCode}] Player [{player.UserName}] has invoked players [{otherPlayer.UserName}] movement");
             }
@@ -299,7 +290,6 @@
             if (!string.IsNullOrWhiteSpace(UserNameInput))
             {
                 inputUserWarningText = "";
-
                 CreatePlayer(UserNameInput); // Create a player if it doesn't exist
 
                 await hubConnection.SendAsync("CreateNewLobby", player);
@@ -351,27 +341,44 @@
             string[] colorList = new string[] { "red", "purple", "green", "blue", "brown", "orange", "pink" };
             string randomColor = colorList[random.Next(0, colorList.Length - 1)];
 
-            player = new Player()
-                {
-                    ConnectionId = hubConnection.ConnectionId,
-                    UserName = userNameInput.Trim(),
-                    Color = randomColor
+            player = new Player
+            {
+                ConnectionId = hubConnection.ConnectionId,
+                UserName = userNameInput.Trim(),
+                Color = randomColor,
+                OldX = leftDir,
+                OldY = topDir,
+                OldServerX = leftDir,
+                OldServerY = topDir
             };
             playerState = new PlayerState(player.ConnectionId);
             playerState.AddFuel(Constants.FUEL_AMOUNT);
         }
     }
 
-    public async Task DrawPlayer(Player player, Canvas2DContext context, double x, double y, bool isLocalPlayer)
+    public async Task DrawPlayer(Player oPlayer, Canvas2DContext context, int x, int y, bool isLocalPlayer)
     {
-        Dot dot = new Dot(x, y, 5, 0, Math.PI * 2, player.Color);
-        await DrawDot(context, dot);
+        // Clear old position if we are the local player
+        if (isLocalPlayer)
+        {
+            await context.ClearRectAsync(oPlayer.OldX - Constants.PLAYER_SIZE, oPlayer.OldY - Constants.PLAYER_SIZE, Constants.PLAYER_SIZE * 2, Constants.PLAYER_SIZE * 2);
+        }
 
-        if(isLocalPlayer && ServerUtils.CanUpdate())
+        Dot playerDot = new Dot(x, y, Constants.PLAYER_SIZE, oPlayer.Color);
+        await DrawDot(context, playerDot);
+
+        oPlayer.OldX = x;
+        oPlayer.OldY = y;
+
+        // Update the lobby players if we are the local player
+        if (isLocalPlayer && ServerUtils.CanUpdate())
         {
             // If the player is local, we send others that his movement has updated
-            await hubConnection.InvokeAsync("MovePlayer", currentLobbyCode, player, x, y);
-            Console.WriteLine($"[Lobby #{currentLobbyCode}] Player [{player.UserName} | {player.Color}] has moved to ({x}, {y})");
+            await hubConnection.InvokeAsync("MovePlayer", currentLobbyCode, oPlayer, x, y);
+            Console.WriteLine($"[Lobby #{currentLobbyCode}] Player [{oPlayer.UserName} | {oPlayer.Color}] has moved to ({x}, {y})");
+            
+            oPlayer.OldServerX = x;
+            oPlayer.OldServerY = y;
         }
     }
 

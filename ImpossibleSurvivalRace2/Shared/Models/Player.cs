@@ -8,12 +8,9 @@ namespace ImpossibleSurvivalRace2.Shared.Models
         public string ConnectionId { get; set; }
         public string UserName { get; set; }
         public string Color { get; set; }
-        public Player()
-        {
-            ConnectionId = string.Empty;
-            UserName = string.Empty;
-            Color = string.Empty;
-        }
-
+        public int OldX { get; set; }
+        public int OldY { get; set; }
+        public int OldServerX { get; set; }
+        public int OldServerY { get; set; }
     }
 }

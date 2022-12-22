@@ -8,7 +8,7 @@
         {
             DateTime currentUpdate = DateTime.Now;
 
-            if(currentUpdate.Subtract(_lastServerUpdate).Seconds >= 1)
+            if(currentUpdate.Subtract(_lastServerUpdate).Milliseconds >= 500)
             {
                 _lastServerUpdate = currentUpdate;
                 return true;
