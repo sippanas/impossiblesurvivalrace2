@@ -11,6 +11,7 @@
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JsRuntime
 @using ProxyDesignPattern
+@using StateDesignPattern
 
 <style>
     body {
@@ -58,6 +59,8 @@
 </div>
 
 <div class="canvas-div" @ref=@(testRef) tabindex="1" @onkeydown="@Move" hidden="@(!gameStarted)">
+    <div>Fuel @(fuel)</div>
+    <div>State @(playerState.State.GetType().Name)</div>
     <BECanvas Width="@Constants.CANVAS_WIDTH" Height="@Constants.CANVAS_HEIGHT" @ref="_canvasReference"> </BECanvas>
 </div>
 
@@ -69,11 +72,13 @@
     int inner = 30;
     string mapColor = "#9F8170";
 
+    int fuel = 0;
     int startLineCenterX;
     int startLineCenterY;
 
     //other variables
     private Player player = null;
+    private PlayerState playerState =  new PlayerState("-");
     public HubConnection? hubConnection;
 
     bool gameStarted = false;
@@ -97,6 +102,7 @@
     int topDir = 470;
     private ElementReference testRef;
 
+
     MovementProxy proxy = new MovementProxy();
 
     Task Move(KeyboardEventArgs e)
@@ -108,25 +114,29 @@
             case "ArrowDown":
                 if (IsPlayerWithinPositiveBoundaries(topDir, Constants.PLAYER_SIZE, Constants.CANVAS_HEIGHT))
                 {
-                    topDir = proxy.Down(topDir);
+                    topDir = proxy.Down(topDir,playerState.State);
+                    playerState.SubtractFuel(1);
                 }
                 break;
             case "ArrowUp":
                 if (IsPlayerWithinNegativeBoundaries(topDir, Constants.PLAYER_SIZE, 0))
                 {
-                    topDir = proxy.Up(topDir);
+                    topDir = proxy.Up(topDir, playerState.State);
+                    playerState.SubtractFuel(1);
                 }
                 break;
             case "ArrowLeft":
                 if (IsPlayerWithinNegativeBoundaries(leftDir, Constants.PLAYER_SIZE, 0))
                 {
-                    leftDir = proxy.Left(leftDir);
+                    leftDir = proxy.Left(leftDir, playerState.State);
+                    playerState.SubtractFuel(1);
                 }
                 break;
             case "ArrowRight":
                 if (IsPlayerWithinPositiveBoundaries(leftDir, Constants.PLAYER_SIZE, Constants.CANVAS_WIDTH))
                 {
-                    leftDir = proxy.Right(leftDir);
+                    leftDir = proxy.Right(leftDir, playerState.State);
+                    playerState.SubtractFuel(1);
                 }
                 break;
             default:
@@ -138,6 +148,43 @@
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         this._context = await _canvasReference.CreateCanvas2DAsync();
+
+        if (gameStarted)
+        {
+            fuel = playerState.FuelAmt;
+            if (playerState.State.GetType().Name == "GreenState")
+            {
+                await _context.FillAsync();
+                await _context.SetFillStyleAsync("green");
+                await _context.FillRectAsync(75, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
+                await _context.FillRectAsync(85, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
+                await _context.FillRectAsync(95, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
+                await _context.FillRectAsync(105, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
+
+            }
+            else if (playerState.State.GetType().Name == "YellowState")
+            {
+                await _context.FillAsync();
+                await _context.SetFillStyleAsync("yellow");
+                await _context.FillRectAsync(75, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
+                await _context.FillRectAsync(85, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
+                await _context.FillRectAsync(95, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
+            }
+            else if (playerState.State.GetType().Name == "RedState")
+            {
+                await _context.FillAsync();
+                await _context.SetFillStyleAsync("red");
+                await _context.FillRectAsync(75, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
+                await _context.FillRectAsync(95, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
+
+            }
+            else if (playerState.State.GetType().Name == "DeadState")
+            {
+                await _context.StrokeTextAsync("No fuel!", 75, 75);
+            }
+        }
+
+
 
         //await testRef.FocusAsync();
 
@@ -162,12 +209,12 @@
         }
     }
 
-    public bool IsPlayerWithinPositiveBoundaries(int pos, int playerSize, int canvasMax)
+    public bool IsPlayerWithinPositiveBoundaries(double pos, int playerSize, int canvasMax)
     {
         return !(pos + playerSize >= canvasMax);
     }
 
-    private bool IsPlayerWithinNegativeBoundaries(int pos, int playerSize, int canvasMin)
+    private bool IsPlayerWithinNegativeBoundaries(double pos, int playerSize, int canvasMin)
     {
         return !(pos - playerSize <= 0);
     }
@@ -304,16 +351,18 @@
             string[] colorList = new string[] { "red", "purple", "green", "blue", "brown", "orange", "pink" };
             string randomColor = colorList[random.Next(0, colorList.Length - 1)];
 
-            player = new Player
-            {
-                ConnectionId = hubConnection.ConnectionId,
-                UserName = userNameInput.Trim(),
-                Color = randomColor
+            player = new Player()
+                {
+                    ConnectionId = hubConnection.ConnectionId,
+                    UserName = userNameInput.Trim(),
+                    Color = randomColor
             };
+            playerState = new PlayerState(player.ConnectionId);
+            playerState.AddFuel(Constants.FUEL_AMOUNT);
         }
     }
 
-    public async Task DrawPlayer(Player player, Canvas2DContext context, int x, int y, bool isLocalPlayer)
+    public async Task DrawPlayer(Player player, Canvas2DContext context, double x, double y, bool isLocalPlayer)
     {
         Dot dot = new Dot(x, y, 5, 0, Math.PI * 2, player.Color);
         await DrawDot(context, dot);
