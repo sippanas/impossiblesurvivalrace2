@@ -121,22 +121,31 @@
             case "ArrowUp":
                 if (IsPlayerWithinNegativeBoundaries(topDir, Constants.PLAYER_SIZE, 0))
                 {
-                    topDir = proxy.Up(topDir, playerState.State);
-                    playerState.SubtractFuel(1);
+                    if(!(playerState.State.GetType().Name == "DeadState"))
+                    {
+                        topDir = proxy.Up(topDir, playerState.State);
+                        playerState.SubtractFuel(1);
+                    }
                 }
                 break;
             case "ArrowLeft":
                 if (IsPlayerWithinNegativeBoundaries(leftDir, Constants.PLAYER_SIZE, 0))
                 {
-                    leftDir = proxy.Left(leftDir, playerState.State);
-                    playerState.SubtractFuel(1);
+                    if (!(playerState.State.GetType().Name == "DeadState"))
+                    {
+                        leftDir = proxy.Left(leftDir, playerState.State);
+                        playerState.SubtractFuel(1);
+                    }
                 }
                 break;
             case "ArrowRight":
                 if (IsPlayerWithinPositiveBoundaries(leftDir, Constants.PLAYER_SIZE, Constants.CANVAS_WIDTH))
                 {
-                    leftDir = proxy.Right(leftDir, playerState.State);
-                    playerState.SubtractFuel(1);
+                    if (!(playerState.State.GetType().Name == "DeadState"))
+                    {
+                        leftDir = proxy.Right(leftDir, playerState.State);
+                        playerState.SubtractFuel(1);
+                    }
                 }
                 break;
             default:
@@ -154,28 +163,34 @@
             fuel = playerState.FuelAmt;
             if (playerState.State.GetType().Name == "GreenState")
             {
+                await _context.BeginBatchAsync();
                 await _context.FillAsync();
                 await _context.SetFillStyleAsync("green");
                 await _context.FillRectAsync(75, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
                 await _context.FillRectAsync(85, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
                 await _context.FillRectAsync(95, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
                 await _context.FillRectAsync(105, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
+                await _context.EndBatchAsync();
 
             }
             else if (playerState.State.GetType().Name == "YellowState")
             {
+                await _context.BeginBatchAsync();
                 await _context.FillAsync();
                 await _context.SetFillStyleAsync("yellow");
                 await _context.FillRectAsync(75, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
                 await _context.FillRectAsync(85, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
                 await _context.FillRectAsync(95, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
+                await _context.EndBatchAsync();
             }
             else if (playerState.State.GetType().Name == "RedState")
             {
+                await _context.BeginBatchAsync();
                 await _context.FillAsync();
                 await _context.SetFillStyleAsync("red");
                 await _context.FillRectAsync(75, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
                 await _context.FillRectAsync(95, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
+                await _context.EndBatchAsync();
 
             }
             else if (playerState.State.GetType().Name == "DeadState")
