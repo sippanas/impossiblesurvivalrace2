@@ -6,9 +6,12 @@ namespace ImpossibleSurvivalRace2.Server.Hubs
 {
     public class GameHub : Hub<IGameHub>
     {
-        private readonly LobbyService _lobbyService = LobbyService.getInstance();
+        private readonly ILobbyService _lobbyService;
 
-        public GameHub() { }
+        public GameHub(ILobbyService lobbyService) 
+        {
+            _lobbyService = lobbyService;
+        }
 
         public override async Task<Task> OnDisconnectedAsync(Exception? exception)
         {
