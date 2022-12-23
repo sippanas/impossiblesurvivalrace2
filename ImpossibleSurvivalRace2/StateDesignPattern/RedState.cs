@@ -32,7 +32,7 @@ namespace ImpossibleSurvivalRace2.StateDesignPattern
             if (fuelAmt > Upperlimit)
             {
                 player.State = new YellowState(this);
-            } else if(fuelAmt < LowerLimit)
+            } else if(fuelAmt <= LowerLimit)
             {
                 player.State = new DeadState(this);
             }

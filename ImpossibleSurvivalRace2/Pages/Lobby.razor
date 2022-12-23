@@ -12,6 +12,7 @@
 @inject IJSRuntime JsRuntime
 @using ProxyDesignPattern
 @using StateDesignPattern
+@using VisitorDesignPattern
 
 <style>
     body {
@@ -55,7 +56,10 @@
         }
     </ul>
 
-    <button id="buttonCenter3" class="btn btn-success" hidden="@(!IsCreator)" @onclick="StartGameAsHost">Start game</button>
+    <button id="buttonCenter3" class="btn btn-success" hidden="@(!IsCreator)" @onclick="StartGameHard">Hard mode</button>
+    <br />
+    <br />
+    <button id="buttonCenter3" class="btn btn-success" hidden="@(!IsCreator)" @onclick="StartGameEasy">Easy mode</button>
 </div>
 
 <div class="canvas-div" @ref=@(testRef) tabindex="1" @onkeydown="@Move" hidden="@(!gameStarted)">
@@ -99,8 +103,13 @@
     int topDir = 470;
     private ElementReference testRef;
 
+    //visitor vars
+    bool gamehard;
+    Obstacles obstacles = new Obstacles();
+    bool obsticlesSet = false;
 
     MovementProxy proxy = new MovementProxy();
+
 
     Task Move(KeyboardEventArgs e)
     {
@@ -109,8 +118,11 @@
             case "ArrowDown":
                 if (IsPlayerWithinPositiveBoundaries(topDir, Constants.PLAYER_SIZE, Constants.CANVAS_HEIGHT))
                 {
-                    topDir = proxy.Down(topDir,playerState.State);
-                    playerState.SubtractFuel(1);
+                    if (!(playerState.State.GetType().Name == "DeadState"))
+                    {
+                        topDir = proxy.Down(topDir, playerState.State);
+                        playerState.SubtractFuel(1);
+                    }
                 }
                 break;
             case "ArrowUp":
@@ -156,47 +168,53 @@
         if (gameStarted)
         {
             fuel = playerState.FuelAmt;
+            /*
+            *
             if (playerState.State.GetType().Name == "GreenState")
             {
-                await _context.BeginBatchAsync();
-                await _context.FillAsync();
-                await _context.SetFillStyleAsync("green");
-                await _context.FillRectAsync(75, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
-                await _context.FillRectAsync(85, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
-                await _context.FillRectAsync(95, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
-                await _context.FillRectAsync(105, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
-                await _context.EndBatchAsync();
+            await _context.BeginBatchAsync();
+            await _context.ClearRectAsync(75, 75, 105 + Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
+            await _context.FillAsync();
+            await _context.SetFillStyleAsync("green");
+            await _context.FillRectAsync(75, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
+            await _context.FillRectAsync(85, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
+            await _context.FillRectAsync(95, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
+        await _context.FillRectAsync(105, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
+            await _context.EndBatchAsync();
 
             }
             else if (playerState.State.GetType().Name == "YellowState")
             {
-                await _context.BeginBatchAsync();
-                await _context.FillAsync();
-                await _context.SetFillStyleAsync("yellow");
-                await _context.FillRectAsync(75, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
-                await _context.FillRectAsync(85, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
-                await _context.FillRectAsync(95, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
-                await _context.EndBatchAsync();
+            await _context.BeginBatchAsync();
+            await _context.ClearRectAsync(75, 75, 105 + Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
+            await _context.FillAsync();
+            await _context.SetFillStyleAsync("yellow");
+            await _context.FillRectAsync(75, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
+            await _context.FillRectAsync(85, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
+            await _context.FillRectAsync(95, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
+        await _context.EndBatchAsync();
             }
             else if (playerState.State.GetType().Name == "RedState")
             {
-                await _context.BeginBatchAsync();
-                await _context.FillAsync();
-                await _context.SetFillStyleAsync("red");
-                await _context.FillRectAsync(75, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
-                await _context.FillRectAsync(95, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
-                await _context.EndBatchAsync();
+            await _context.BeginBatchAsync();
+            await _context.ClearRectAsync(75, 75, 105 + Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
+            await _context.FillAsync();
+            await _context.SetFillStyleAsync("red");
+            await _context.FillRectAsync(75, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
+            await _context.FillRectAsync(95, 75, Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
+        await _context.EndBatchAsync();
 
-            }
-            else if (playerState.State.GetType().Name == "DeadState")
-            {
-                await _context.StrokeTextAsync("No fuel!", 75, 75);
-            }
         }
+        else if (playerState.State.GetType().Name == "DeadState")
+            {
+            await _context.BeginBatchAsync();
+            await _context.ClearRectAsync(75, 75, 105 + Constants.FUEL_CELL_WIDTH, Constants.FUEL_CELL_HEIGHT);
+            await _context.StrokeTextAsync("No fuel!", 75, 75,200);
+            await _context.EndBatchAsync();
+             }
+             */
 
-
-
-        //await testRef.FocusAsync();
+        }
 
         // Outer stroke rectangle
         await _context.StrokeRectAsync(0, 0, Constants.CANVAS_WIDTH, Constants.CANVAS_HEIGHT);
@@ -209,6 +227,37 @@
             // Drawing local player
             // (Search for PlayerMovedAction for other players drawing in lobby)
             await DrawPlayer(this.player, this._context, leftDir, topDir, isLocalPlayer: true);
+            if (gamehard)
+            {
+                if (!obsticlesSet)
+                {
+                    HardMode visitor = new HardMode();
+                    for (int i = 0; i < Constants.HARD_OBSTACLE_COUNT; i++)
+                        obstacles.Attach(new StaticObstacle());
+                    obstacles.Accept(visitor);
+                }
+            }
+            else
+            {
+                if (!obsticlesSet)
+                {
+                    EasyMode visitor = new EasyMode();
+                    for (int i = 0; i < Constants.EASY_OBSTACLE_COUNT; i++)
+                        obstacles.Attach(new StaticObstacle());
+                    obstacles.Accept(visitor);
+                }
+            }
+
+            if (!obsticlesSet)
+            {
+                foreach (Obstacle obj in obstacles.obstacles)
+                {
+                    Console.WriteLine("x: {0} y: {1}", obj.X, obj.Y);
+                    Dot dot = new Dot(obj.X, obj.Y, 3, Constants.STATIC_OBSTACLE_COLOR);
+                    await DrawDot(_context, dot);
+                }
+                obsticlesSet = true;
+            }
         }
     }
 
@@ -231,10 +280,25 @@
     }
 
     // Method used for host player
-    public async void StartGameAsHost()
+    public async void StartGameHard()
     {
         gameStarted = true;
+        gamehard = true;
+        try
+        {
+            await hubConnection.InvokeAsync("GameStart", currentLobbyCode);
+            Console.WriteLine($"Lobby Code: {currentLobbyCode} | Game has started");
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
 
+    public async void StartGameEasy()
+    {
+        gameStarted = true;
+        gamehard = false;
         try
         {
             await hubConnection.InvokeAsync("GameStart", currentLobbyCode);
