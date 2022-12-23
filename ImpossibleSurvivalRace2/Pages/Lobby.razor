@@ -62,7 +62,7 @@
     <button id="buttonCenter3" class="btn btn-success" hidden="@(!IsCreator)" @onclick="StartGameEasy">Easy mode</button>
 </div>
 
-<div class="canvas-div" @ref=@(testRef) tabindex="1" @onkeydown="@Move" hidden="@(!gameStarted)">
+<div class="canvas-div" @ref=@(testRef) tabindex="1" @onkeydown="@Move" @onkeyup="@ResetKeyPressed" hidden="@(!gameStarted)">
     <div>Fuel @(fuel)</div>
     <div>State @(playerState.State.GetType().Name)</div>
     <BECanvas Width="@Constants.CANVAS_WIDTH" Height="@Constants.CANVAS_HEIGHT" @ref="_canvasReference"> </BECanvas>
@@ -99,6 +99,8 @@
 
     private List<string> messages = new List<string>();
 
+    bool KeyIsPressed = false;
+
     int leftDir = 10;
     int topDir = 470;
     private ElementReference testRef;
@@ -113,6 +115,8 @@
 
     Task Move(KeyboardEventArgs e)
     {
+        KeyIsPressed = true;
+
         switch (e.Code)
         {
             case "ArrowDown":
@@ -160,6 +164,8 @@
         }
         return Task.CompletedTask;
     }
+
+    void ResetKeyPressed() => KeyIsPressed = false;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -214,6 +220,12 @@
              }
              */
 
+        }
+
+        if(KeyIsPressed)
+        {
+            await _context.ClearRectAsync(this.player.OldX - Constants.PLAYER_SIZE, this.player.OldY - Constants.PLAYER_SIZE, 
+                Constants.PLAYER_SIZE * 2, Constants.PLAYER_SIZE * 2);
         }
 
         // Outer stroke rectangle
@@ -271,7 +283,7 @@
         return !(pos - playerSize <= 0);
     }
 
-    public static async Task DrawDot(Canvas2DContext context, Dot dot)
+    public async Task DrawDot(Canvas2DContext context, Dot dot)
     {
         await context.BeginPathAsync();
         await context.ArcAsync(dot.startX, dot.startY, dot.radius, dot.startAngle, dot.endAngle, true);
@@ -440,7 +452,7 @@
         // Clear old position if we are the local player
         if (isLocalPlayer)
         {
-            await context.ClearRectAsync(oPlayer.OldX - Constants.PLAYER_SIZE, oPlayer.OldY - Constants.PLAYER_SIZE, Constants.PLAYER_SIZE * 2, Constants.PLAYER_SIZE * 2);
+            //await context.ClearRectAsync(oPlayer.OldX - Constants.PLAYER_SIZE, oPlayer.OldY - Constants.PLAYER_SIZE, Constants.PLAYER_SIZE * 2, Constants.PLAYER_SIZE * 2);
         }
 
         Dot playerDot = new Dot(x, y, Constants.PLAYER_SIZE, oPlayer.Color);

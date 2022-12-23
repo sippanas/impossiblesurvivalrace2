@@ -4,27 +4,9 @@ namespace ImpossibleSurvivalRace2.Services
 {
     public class LobbyService : ILobbyService
     {
-        private static LobbyService instance = null;
-        private static object _lock = new object();
-
         private readonly Dictionary<int, Lobby> _lobbies = new Dictionary<int, Lobby>();
 
-        public LobbyService()
-        {
-            Console.WriteLine("Lobby service is initialized.");
-        }
-
-        public static LobbyService getInstance()
-        {
-            lock(_lock)
-            {
-                if(instance == null)
-                {
-                    instance = new LobbyService();
-                }
-            }
-            return instance;
-        }
+        public LobbyService() { }
 
         public Task<int> GetPlayersInLobbyCount(int lobbyCode)
         {
