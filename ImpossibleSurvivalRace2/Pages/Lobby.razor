@@ -3,6 +3,7 @@
 @using Blazor.Extensions.Canvas
 @using ImpossibleSurvivalRace2.Server.Hubs
 @using ImpossibleSurvivalRace2.Services
+@using ImpossibleSurvivalRace2.TemplateMethodDesignPattern;
 @using Microsoft.AspNetCore.SignalR
 @using Microsoft.AspNetCore.SignalR.Client
 @using Blazor.Extensions.Canvas.Canvas2D
@@ -44,7 +45,7 @@
 
 </div>
 
-<div class="form-group" hidden="@(!HasJoinedLobby || gameStarted)">
+<div class="form-group" hidden="@(!HasJoinedLobby || startObj.HasStarted)">
 
     <p>Current lobby: <b>@currentLobbyCode</b></p>
 
@@ -62,7 +63,7 @@
     <button id="buttonCenter3" class="btn btn-success" hidden="@(!IsCreator)" @onclick="StartGameEasy">Easy mode</button>
 </div>
 
-<div class="canvas-div" @ref=@(testRef) tabindex="1" @onkeydown="@Move" @onkeyup="@ResetKeyPressed" hidden="@(!gameStarted)">
+<div class="canvas-div" @ref=@(testRef) tabindex="1" @onkeydown="@Move" @onkeyup="@ResetKeyPressed" hidden="@(!startObj.HasStarted)">
     <div>Fuel @(fuel)</div>
     <div>State @(playerState.State.GetType().Name)</div>
     <BECanvas Width="@Constants.CANVAS_WIDTH" Height="@Constants.CANVAS_HEIGHT" @ref="_canvasReference"> </BECanvas>
@@ -84,8 +85,9 @@
     private Player player = null;
     private PlayerState playerState =  new PlayerState("-");
     public HubConnection? hubConnection;
+    public Start startObj = new Start();
 
-    bool gameStarted = false;
+    //startObj.HasStarted = false;
     private bool HasJoinedLobby = false;
     private bool HasBeenSpawned = false;
     private bool IsCreator = false;
@@ -171,7 +173,7 @@
     {
         this._context = await _canvasReference.CreateCanvas2DAsync();
 
-        if (gameStarted)
+        if (startObj.HasStarted)
         {
             fuel = playerState.FuelAmt;
             /*
@@ -234,7 +236,7 @@
         await _context.StrokeRectAsync(50, 50, Constants.CANVAS_WIDTH - 100, Constants.CANVAS_HEIGHT - 100);
 
         // Player drawing
-        if (gameStarted)
+        if (startObj.HasStarted)
         {
             // Drawing local player
             // (Search for PlayerMovedAction for other players drawing in lobby)
@@ -294,7 +296,7 @@
     // Method used for host player
     public async void StartGameHard()
     {
-        gameStarted = true;
+        startObj.HasStarted = true;
         gamehard = true;
         try
         {
@@ -309,7 +311,7 @@
 
     public async void StartGameEasy()
     {
-        gameStarted = true;
+        startObj.HasStarted = true;
         gamehard = false;
         try
         {
@@ -325,7 +327,7 @@
     // Method used for local player
     public void StartGameAsPlayer()
     {
-        gameStarted = true;
+        startObj.HasStarted = true;
     }
 
     protected override async Task OnInitializedAsync()
